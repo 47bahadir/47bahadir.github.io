@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>函数Hook技术（Detour 转向） | BHD Tec</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="/image/logo/bit.ico">
+  <link rel="shortcut icon" type="image/x-icon" href="/image/logo/bit.ico">
+
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+  <!-- 添加代码高亮样式 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
+  <!-- 添加highlight.js库 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+  <!-- 添加mermaid.js库 -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <link rel="stylesheet" href="/css/code.css">
+  <link rel="stylesheet" href="/css/code-custom.css">
+  <link rel="stylesheet" href="/css/code-languages.css">
+  <link rel="stylesheet" href="/css/mermaid.css">
+
+  <link rel="stylesheet" href="/css/vscode.css">
+  <link rel="stylesheet" href="/css/post.css">
+  <link rel="stylesheet" href="/css/tag.css">
+  <link rel="stylesheet" href="/css/categories.css">
+  <link rel="stylesheet" href="/css/archive.css">
+  <link rel="stylesheet" href="/css/search.css">
+  <link rel="stylesheet" href="/css/mobile.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+  <link rel="stylesheet" href="/css/elements.css">
+  <link rel="stylesheet" href="/css/statistics.css">
+
+  <!-- 添加 JetBrains Mono 字体 -->  
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- Add any custom head content here -->
+
+  <script src="/js/explorer.js"></script>
+  <script src="/js/code-copy.js"></script>
+  <script src="/js/code-enhance.js"></script>
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div class="wrapper">
+      <div class="mobile-menu-toggle">
+        <i class="fas fa-bars"></i>
+      </div>
+      <header class="vs-header">
+  <nav class="vs-nav">
+    <div class="nav-left">
+      <a href="/" class="nav-brand">
+        <i class="fas fa-terminal"></i>
+        BHD Tec
+      </a>
+    </div>
+    
+    <div class="nav-right">
+      <a href="/" class="nav-item ">
+        <i class="fas fa-home"></i>
+        <span>首页</span>
+      </a>
+      <a href="/archives/" class="nav-item ">
+        <i class="fas fa-archive"></i>
+        <span>归档</span>
+      </a>
+      <a href="/categories/" class="nav-item ">
+        <i class="fas fa-folder"></i>
+        <span>分类</span>
+      </a>
+      <a href="/tags/" class="nav-item ">
+        <i class="fas fa-tags"></i>
+        <span>标签</span>
+      </a>
+      <a href="/search/" class="nav-item ">
+        <i class="fas fa-search"></i>
+        <span>搜索</span>
+      </a>
+      <a href="/about/" class="nav-item ">
+        <i class="fas fa-info-circle"></i>
+        <span>关于</span>
+      </a>
+    </div>
+  </nav>
+</header>
+
+<script>
+  function smoothScroll(event, target) {
+    event.preventDefault();
+    const targetId = target.substring(target.indexOf('#') + 1);
+    const targetElement = document.getElementById(targetId);
+
+    if (targetElement) {
+      window.scrollTo({
+        top: targetElement.offsetTop - 50, // 调整偏移量
+        behavior: 'smooth'
+      });
+    } else {
+      window.location.href = target;
+    }
+  }
+
+  window.addEventListener('scroll', function() {
+    const header = document.querySelector('.vs-header');
+    const nav = document.querySelector('.vs-nav');
+    const scrollPercent = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+    
+    nav.style.setProperty('--scroll-percent', `${scrollPercent}%`);
+    
+    if (window.scrollY > 0) {
+      header.classList.add('scrolled');
+    } else {
+      header.classList.remove('scrolled');
+    }
+  });
+
+  // 添加标签页切换动画
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', function(e) {
+      const ripple = document.createElement('span');
+      ripple.classList.add('nav-ripple');
+      this.appendChild(ripple);
+      
+      const rect = this.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      ripple.style.left = `${x}px`;
+      ripple.style.top = `${y}px`;
+      
+      setTimeout(() => ripple.remove(), 1000);
+    });
+  });
+</script>
+
+
+<div class="vscode-container">
+  <!-- 左侧资源管理器 -->
+  <div class="sidebar-explorer">
+    <!-- TOC导航 -->
+    <div class="explorer-section">
+      <div class="section-header">
+        <i class="fas fa-list"></i>
+        <span>TABLE OF CONTENTS</span>
+      </div>
+      <div class="section-content">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%80%EF%BC%8C%E6%8A%80%E6%9C%AF%E4%BB%8B%E7%BB%8D"><span class="toc-text">一，技术介绍</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-Detour%E5%92%8CHook%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-text">1.Detour和Hook的区别</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E4%B8%AD%E9%97%B4%E5%87%BD%E6%95%B0%E9%92%A9%E5%AD%90%EF%BC%88Mid-Function-Hooking%EF%BC%89"><span class="toc-text">2.中间函数钩子（Mid Function Hooking）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E5%A4%96%E9%83%A8%E9%92%A9%E5%AD%90%EF%BC%88External-Hooking%EF%BC%89"><span class="toc-text">3.外部钩子（External Hooking）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-%E8%A2%AB%E7%AA%83%E5%8F%96%E7%9A%84%E5%AD%97%E8%8A%82%EF%BC%88Stolen-Bytes%EF%BC%89"><span class="toc-text">4.被窃取的字节（Stolen Bytes）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-%E4%BB%A3%E7%A0%81%E6%B4%9E%EF%BC%88Code-Caves%EF%BC%89"><span class="toc-text">5.代码洞（Code Caves）</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%EF%BC%8CHook%E5%87%BD%E6%95%B0%EF%BC%88Detour%EF%BC%89"><span class="toc-text">二，Hook函数（Detour）</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E5%87%BD%E6%95%B0%E5%AE%9A%E4%B9%89"><span class="toc-text">1.函数定义</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-Hook%E5%87%BD%E6%95%B0%E5%AE%9E%E7%8E%B0"><span class="toc-text">2.Hook函数实现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E6%81%A2%E5%A4%8DHook%E5%87%BD%E6%95%B0"><span class="toc-text">3.恢复Hook函数</span></a></li></ol></li></ol>
+      </div>
+    </div>
+    
+    <!-- 同分类文章 -->
+    
+    <div class="explorer-section">
+      <div class="section-header">
+        <i class="fas fa-folder"></i>
+        <span>CATEGORY POSTS</span>
+      </div>
+      <div class="section-content">
+        
+          <div class="file">
+            <i class="fas fa-file-code"></i>
+            <a href="/2025/04/11/post9/">函数Hook技术（Trampoline 蹦床）</a>
+          </div>
+        
+          <div class="file">
+            <i class="fas fa-file-code"></i>
+            <a href="/2025/04/01/post7/">游戏函数调用技术</a>
+          </div>
+        
+          <div class="file">
+            <i class="fas fa-file-code"></i>
+            <a href="/2025/02/22/post1/">获取程序的PID和模块基址</a>
+          </div>
+        
+      </div>
+    </div>
+    
+    
+    <!-- 标签列表 -->
+    
+    <div class="explorer-section">
+      <div class="section-header">
+        <i class="fas fa-tags"></i>
+        <span>ARTICLE TAGS</span>
+      </div>
+      <div class="section-content">
+        
+          <div class="tag-item">
+            <i class="fas fa-tag"></i>
+            <a href="/tags/%E6%8A%80%E6%9C%AF/">技术</a>
+            <span class="count">(9)</span>
+          </div>
+        
+          <div class="tag-item">
+            <i class="fas fa-tag"></i>
+            <a href="/tags/C%E8%AF%AD%E8%A8%80/">C语言</a>
+            <span class="count">(4)</span>
+          </div>
+        
+          <div class="tag-item">
+            <i class="fas fa-tag"></i>
+            <a href="/tags/%E5%87%BD%E6%95%B0/">函数</a>
+            <span class="count">(4)</span>
+          </div>
+        
+          <div class="tag-item">
+            <i class="fas fa-tag"></i>
+            <a href="/tags/API/">API</a>
+            <span class="count">(4)</span>
+          </div>
+        
+      </div>
+    </div>
+    
+  </div>
+
+  <!-- 主要内容区域 -->
+  <div class="editor-content">
+    <div class="tab-bar">
+      <div class="tab active">
+        <i class="fas fa-file-alt"></i>
+        <span>函数Hook技术（Detour 转向）.md</span>
+      </div>
+    </div>
+    
+    <div class="content-area">
+      <article class="post-content">
+        <div class="post-header">
+          <h1>函数Hook技术（Detour 转向）</h1>
+          <div class="post-meta">
+            <span class="date">
+              <i class="fas fa-calendar-alt"></i>
+              2025-04-07
+            </span>            
+              <span class="categories">
+                <i class="fas fa-folder"></i>
+                <div class="categories-list">
+                  <ul class="category-item-post-list"><li class="category-item-post-list-item"><a class="category-item-post-list-link" href="/categories/%E6%8A%80%E6%9C%AF%E5%88%86%E4%BA%AB/">技术分享</a></li></ul>
+                </div>
+              </span>
+            
+            
+              <span class="tags">
+                <i class="fas fa-tags"></i>
+                <div class="tags-list">
+                  <ul class="tag-item-post-list" itemprop="keywords"><li class="tag-item-post-list-item"><a class="tag-item-post-list-link" href="/tags/API/" rel="tag">API</a></li><li class="tag-item-post-list-item"><a class="tag-item-post-list-link" href="/tags/C%E8%AF%AD%E8%A8%80/" rel="tag">C语言</a></li><li class="tag-item-post-list-item"><a class="tag-item-post-list-link" href="/tags/%E5%87%BD%E6%95%B0/" rel="tag">函数</a></li><li class="tag-item-post-list-item"><a class="tag-item-post-list-link" href="/tags/%E6%8A%80%E6%9C%AF/" rel="tag">技术</a></li></ul>
+                </div>
+              </span>
+            
+          </div>
+        </div>
+        
+        <div class="post-body vscode-markdown">
+          <p>今天分享函数Hook中的Detour技术，这项技术可以拦截修改或者完全替换目标函数的任意代码。我们最多接触的是Cheat Engine 当中的注入脚本功能，想把这个功能转换成C++程序的话只能通过detour（转向）来实现。下面这篇文章当中将介绍Hook技术的具体实现detour方法。</p>
+<hr>
+<h1 id="一，技术介绍"><a href="#一，技术介绍" class="headerlink" title="一，技术介绍"></a>一，技术介绍</h1><h2 id="1-Detour和Hook的区别"><a href="#1-Detour和Hook的区别" class="headerlink" title="1.Detour和Hook的区别"></a>1.Detour和Hook的区别</h2><p>在一些技术文章中总能看到两种术语，<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Microsoft_Detours">Detour</a>和<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Hooking">Hook</a>。Hook是个更广泛的概念，一般是指拦截和修改正常执行程序的技术。Hook有多种实现方式，其中一个是detour。</p>
+<p>那么Detour指的是通过跳转来转向原始程序的技术。先转向到另一段代码（此代码不一定是自己的代码，可以转向到进程内存的不同位置）然后通常会返回原始位置。</p>
+<p>在实际编程开发当中，很多开发者会把这两种术语互换使用。尤其是在Windows开发领域。例如微软的Detour库本质上就是个函数hooking的库，但是名称却使用了”Detours”。</p>
+<h2 id="2-中间函数钩子（Mid-Function-Hooking）"><a href="#2-中间函数钩子（Mid-Function-Hooking）" class="headerlink" title="2.中间函数钩子（Mid Function Hooking）"></a>2.中间函数钩子（Mid Function Hooking）</h2><p>detour技术还有一种称呼叫 Mid Function Hooking 。我们Detour函数的第一个字节的话那这个就不叫中间函数钩子，只有Detour函数的剩下部分才叫中间函数钩子。</p>
+<p>在函数的第一个字节放置Detour的话很容易被一些反作弊系统检测到。因为反作弊总不能时时刻刻检测整个函数的完整性，大部分反作弊会检测函数的前几行代码是否正确，所以中间钩子函数不会那么容易被检测。</p>
+<h2 id="3-外部钩子（External-Hooking）"><a href="#3-外部钩子（External-Hooking）" class="headerlink" title="3.外部钩子（External Hooking）"></a>3.外部钩子（External Hooking）</h2><p>在一些外部作弊软件当中会调用 Windows API 的 <a target="_blank" rel="noopener" href="https://learn.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-writeprocessmemory">WriteProcessMemory</a> 将代码写入到目标进程，通过相同的方式把原有的代码改成跳转代码（调转到自己的代码）来实现外部Detour（外部钩子）。</p>
+<p>实现外部钩子要把汇编代码转换成指定的shellcode再写入目标进程，比起内部钩子要复杂得多。在内部使用钩子时就不需要这么麻烦。</p>
+<h2 id="4-被窃取的字节（Stolen-Bytes）"><a href="#4-被窃取的字节（Stolen-Bytes）" class="headerlink" title="4.被窃取的字节（Stolen Bytes）"></a>4.被窃取的字节（Stolen Bytes）</h2><p>我们把detour写入到目标内存时被覆盖的字节称为“被窃取的字节”（Stolen Bytes）。我们需要彻底了解我们的detour到底覆盖了多少个字节，执行detour时要执行这些字节，不然栈和寄存器的值被破环的话可能导致程序崩溃。</p>
+<p>这里的字节数时根据实际情况来决定的，比如我们要detour的地址处有一个长度为8字节的指令，我们的detour只占5字节。这种情况下需要把8个字节都作为被窃取的字节（5个字节为跳转指令，3个字节为空指令），在detour当中执行这完整的8字节指令。说白了就是不破坏原程序的指令确保程序不会崩溃。</p>
+<h2 id="5-代码洞（Code-Caves）"><a href="#5-代码洞（Code-Caves）" class="headerlink" title="5.代码洞（Code Caves）"></a>5.代码洞（Code Caves）</h2><p><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Code_cave">代码洞</a>指的是目标进程中没有被进程使用的内存位置，就是已经被分配了但是进程不使用的内存。</p>
+<p>使用detour时可以把代码写到这个内存位置，这样就不用再单独的分配内存了让自己的行为悄无声息。要使用代码洞的前提是内存页必须得有执行权限，可以使用 VirtualProtect 或 VirtualProtectEx 修改权限。但是创建了具有写入权限的进程句柄的话本身就没必要担心反作弊的问题了。</p>
+<h1 id="二，Hook函数（Detour）"><a href="#二，Hook函数（Detour）" class="headerlink" title="二，Hook函数（Detour）"></a>二，Hook函数（Detour）</h1><h2 id="1-函数定义"><a href="#1-函数定义" class="headerlink" title="1.函数定义"></a>1.函数定义</h2><p>首先Hook函数需要一个要被Hook的原始函数地址，还需要一个我们自己定义的函数地址，最后需要覆盖字节的长度：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">bool</span> <span class="hljs-title">Hook</span><span class="hljs-params">(<span class="hljs-type">void</span> * toHook, <span class="hljs-type">void</span> * ourFunct, <span class="hljs-type">int</span> len)</span></span>;<br></code></pre></td></tr></table></figure>
+
+<p>先检查需要覆盖的字节长度是不是至少为5个字节，因为x86架构下完整的跳转指令（jmp）需要5个字节。其中第一个字节的操作码为0xE9，剩下4个字节为相对地址偏移量。如果长度小于5直接让函数返回false：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">if</span> (len &lt; <span class="hljs-number">5</span>) &#123;<br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>长度没问题之后就要修改目标内存的保护属性，这个可以通过调用 Windows API 当中的 <a target="_blank" rel="noopener" href="https://learn.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-virtualprotect">VirtualProtect</a> 来目标函数的内存保护属性为可读写。同时通过此API的最后一个参数来保存原始保护属性到自定义的变量当中，等修改完之后方便恢复到原来的属性：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c++">DWORD curProtection;<br><span class="hljs-built_in">VirtualProtect</span>(toHook, len, PAGE_EXECUTE_READWRITE, &amp;curProtection);<br></code></pre></td></tr></table></figure>
+
+<p>获取到可读写权限之后使用<code>memset</code>函数把目标地址处的需要覆盖的全部字节填充为0x90（Nop指令），目的是为了清楚原有的指令：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-built_in">memset</span>(toHook, <span class="hljs-number">0x90</span>, len);<br></code></pre></td></tr></table></figure>
+
+<p>计算从原来的函数跳转到我们的函数需要的相对偏移量。x86架构中，相对偏移量是相对于原函数跳转指令之后的地址计算的，所以得减个5（跳转指令本身的长度）：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++">DWORD relativeAddress = ((DWORD)ourFunct - (DWORD)toHook) - <span class="hljs-number">5</span>;<br></code></pre></td></tr></table></figure>
+
+<p>有了跳转地址之后可以写入跳转指令了，先在目标地址的第一个字节处写入0xE9（x86汇编中是无条件跳转JMP指令的操作码）。紧接着后面四个字节处写入前面算好的跳转地址：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c++">*(BYTE*)toHook = <span class="hljs-number">0xE9</span>;<br>*(DWORD*)((DWORD)toHook + <span class="hljs-number">1</span>) = relativeAddress;<br></code></pre></td></tr></table></figure>
+
+<p>全部操作完整之后可以恢复内存的保护属性为原来的属性。调用 VirtualProtect 把内存页的保护属性恢复过来，最后返回结果true表示Hook成功：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c++">DWORD temp;<br><span class="hljs-built_in">VirtualProtect</span>(toHook, len, curProtection, &amp;temp);<br><span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br></code></pre></td></tr></table></figure>
+
+<p>下面是完整代码：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">bool</span> <span class="hljs-title">myHook</span><span class="hljs-params">(<span class="hljs-type">void</span> * toHook, <span class="hljs-type">void</span> * ourFunct, <span class="hljs-type">int</span> len)</span> </span>&#123;<br>    <span class="hljs-keyword">if</span> (len &lt; <span class="hljs-number">5</span>) &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;<br>    &#125;<br><br>    DWORD curProtection;<br>    <span class="hljs-built_in">VirtualProtect</span>(toHook, len, PAGE_EXECUTE_READWRITE, &amp;curProtection);<br><br>    <span class="hljs-built_in">memset</span>(toHook, <span class="hljs-number">0x90</span>, len);<br><br>    DWORD relativeAddress = ((DWORD)ourFunct - (DWORD)toHook) - <span class="hljs-number">5</span>;<br><br>    *(BYTE*)toHook = <span class="hljs-number">0xE9</span>;<br>    *(DWORD*)((DWORD)toHook + <span class="hljs-number">1</span>) = relativeAddress;<br><br>    DWORD temp;<br>    <span class="hljs-built_in">VirtualProtect</span>(toHook, len, curProtection, &amp;temp);<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="2-Hook函数实现"><a href="#2-Hook函数实现" class="headerlink" title="2.Hook函数实现"></a>2.Hook函数实现</h2><p>在我 GitHub 项目 <a target="_blank" rel="noopener" href="https://github.com/47bahadir/Hitman5_InternalCheat">Hitman5_InternalCheat</a> 当中有使用此技术的片段，下面把这些片段提取出来做个介绍，更详细的查看项目源代码即可了解。</p>
+<p>我在游戏中找到了关于子弹修改的关键函数（在杀手5逆向分析系列教程中有讲），下面是此函数写入子弹数值部分的汇编代码：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs assembly">.text:006F5C70                 push    ebp<br>.text:006F5C71                 mov     ebp, esp<br>.text:006F5C73                 sub     esp, 1Ch<br>.text:006F5C76                 mov     ax, [ebp+currentAmmo]<br>.text:006F5C7A                 push    ebx<br>.text:006F5C7B                 push    esi<br>.text:006F5C7C                 mov     esi, ecx<br>.text:006F5C7E                 mov     edx, [esi]<br>.text:006F5C80                 mov     [esi+316h], ax  ; 此处通过ax寄存器写入子弹数<br>.text:006F5C87                 mov     eax, [edx+180h]<br></code></pre></td></tr></table></figure>
+
+<p>我在写入子弹的位置进行了Hook（此地址处006F5C80），下面是我要修改的Hook函数实现：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-type">void</span> __declspec(naked) hook::<span class="hljs-built_in">ammoFunc</span>()		<br>&#123;		<span class="hljs-comment">//每次调用更新子弹代码就修改子弹数为999</span><br>	__asm<br>	&#123;<br>		push ecx					;先存储ecx寄存器防止程序崩溃<br>		mov ecx, [esi + <span class="hljs-number">0x5E6</span>]			<br>		cmp ecx, <span class="hljs-number">2</span>					;判断是敌方还是本人<br>		je code						;是敌方就跳转到原始指令<br>		mov ax, <span class="hljs-number">0x3E7</span>				;是本人就把<span class="hljs-number">999</span>存到ax当中<br>		mov[esi + <span class="hljs-number">0x00000316</span>], ax		;修改子弹数为<span class="hljs-number">999</span><br>		pop ecx						;恢复原来的ecx寄存器<br>		jmp ammoBackAddy			;跳转到原程序后续代码处<br><br>		code :						;原代码<br>		mov[esi + <span class="hljs-number">0x00000316</span>], ax<br>		pop ecx<br>		jmp ammoBackAddy<br>	&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>先查看并存储目标位置的原始指令包括机器码：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs assembly">HMA.exe+2F5C80 -&gt; 66 89 86 16 03 00 00 == mov [esi+00000316],ax<br></code></pre></td></tr></table></figure>
+
+<p>可以看到机器码总共占7个字节，也就是说要覆盖的长度为7个字节。目标地址为模块基址加上偏移量 0x2F5C80。原程序的下一行代码地址为目标地址加上被窃取的字节长度：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-type">int</span> ammoLen = <span class="hljs-number">7</span>;<br><span class="hljs-type">void</span>* ammoDst = (<span class="hljs-type">void</span>*)(modBaseAddy + <span class="hljs-number">0x2F5C80</span>);<br>ammoBackAddy = (DWORD)ammoDst + ammoLen;<br></code></pre></td></tr></table></figure>
+
+<p>有了这些信息之后可以直接调用Hook函数来进行真正的Hook了：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++">mem::<span class="hljs-built_in">myHook</span>(ammoDst, hook::ammoFunc, ammoLen);<br></code></pre></td></tr></table></figure>
+
+<h2 id="3-恢复Hook函数"><a href="#3-恢复Hook函数" class="headerlink" title="3.恢复Hook函数"></a>3.恢复Hook函数</h2><p>我们想要结束Hook的话需要把之前被窃取的字节恢复成原来的模样才行。这里可以写一段修改内存机器码的函数，接受的参数为目标地址，修改内容和大小：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">mem::writePatch</span><span class="hljs-params">(BYTE* dst, BYTE* src, <span class="hljs-type">unsigned</span> <span class="hljs-type">int</span> size)</span></span><br><span class="hljs-function"></span>&#123;<br>	DWORD oldPertec = <span class="hljs-number">0</span>;<br>	<span class="hljs-built_in">VirtualProtect</span>((BYTE*)dst, size, PAGE_EXECUTE_READWRITE, &amp;oldPertec);<br>	<span class="hljs-built_in">memcpy</span>((BYTE*)dst, (BYTE*)src, size);<br>	<span class="hljs-built_in">VirtualProtect</span>((BYTE*)dst, size, oldPertec, &amp;oldPertec);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>同样的先存储原来的内存保护属性，再把内存保护属性修改为可读写，把给定的修改内容写进去，再把内存保护属性恢复回来。</p>
+<p>下面调用此函数来恢复被窃取的字节为原来的机器码：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++">mem::<span class="hljs-built_in">writePatch</span>((BYTE*)ammoDst, (BYTE*)<span class="hljs-string">&quot;\x66\x89\x86\x16\x03\x00\x00&quot;</span>, ammoLen);<br></code></pre></td></tr></table></figure>
+
+<p>这样以来程序就变回了原来的代码。</p>
+<hr>
+<p>上面介绍的这种Detour方法是Hook技术当中的一种技术，后面会陆续分享更多的Hook技术。可以把存储原始指令的机制整合到Hook函数当中使用会更加方便。文章当中有需要更改的部分请在评论区指出或者联系我个人邮箱进行反馈，谢谢观看！</p>
+
+        </div>
+        
+        <!-- 文章导航 -->
+        <nav class="post-nav">
+          
+            <a class="prev" href="/2025/04/11/post9/">
+              <i class="fas fa-chevron-left"></i>
+              函数Hook技术（Trampoline 蹦床）
+            </a>
+          
+          
+            <a class="next" href="/2025/04/01/post7/">
+              游戏函数调用技术
+              <i class="fas fa-chevron-right"></i>
+            </a>
+          
+        </nav>
+      </article>
+    </div>
+  </div>
+</div>
+
+    </div>
+    <footer class="footer">
+  <div class="status-bar">
+    <div class="status-item">
+      <i class="fas fa-code-branch"></i>
+      master
+    </div>
+    <div class="status-item">
+      <i class="fas fa-sync"></i>
+      bahadir
+    </div>
+    <div class="status-item">
+      <i class="fas fa-clock"></i>
+      2025-08-21
+    </div>
+    <div class="status-item">
+      Designed By&nbsp; <a href="https://github.com/47bahadir" target="_blank"> bahadir</a>
+    </div>
+    <div class="status-item github">
+      <a href="https://github.com/47bahadir" target="_blank">
+        <i class="fab fa-github"></i>
+      </a>
+    </div>
+    <div class="status-item" id="site-runtime" style="margin-left: auto;">
+      <i class="fas fa-heartbeat"></i>
+      <span id="runtime-text">Site running for...</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+// 网站运行时间计算器
+function updateSiteRuntime() {
+  // 设置网站启动时间 (请根据实际情况修改这个日期)
+  const startDate = new Date('2025-02-22 00:00:00'); // 修改为你的网站启动日期
+  const now = new Date();
+  const timeDiff = now - startDate;
+
+  // 计算天数、小时、分钟、秒数
+  const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+
+  // 更新显示文本
+  const runtimeText = `Site running for ${days} days ${hours} hours ${minutes} minutes ${seconds} seconds`;
+  const runtimeElement = document.getElementById('runtime-text');
+  if (runtimeElement) {
+    runtimeElement.textContent = runtimeText;
+  }
+}
+
+// 页面加载完成后开始计时
+document.addEventListener('DOMContentLoaded', function() {
+  updateSiteRuntime(); // 立即更新一次
+  setInterval(updateSiteRuntime, 1000); // 每秒更新一次
+});
+</script>
+
+    
+    <!-- 全局配置 -->
+    <script>
+      window.HEXO_CONFIG = {
+        language: "zh-CN",
+        root: "/"
+      };
+      
+      // 特定于搜索的配置
+      window.VSC4T_SEARCH = {
+        root: "/"
+      };
+    </script>
+    
+    <script src="//cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/highlight.js@11.7.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+    <!-- 这里可以放置自定义脚本 -->
+<script>
+document.addEventListener('DOMContentLoaded', (event) => {
+  // Apply smooth scroll to non-TOC anchor links
+  document.querySelectorAll('a[href^="#"]:not(.toc-link)').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+      e.preventDefault();
+      // Check if querySelector is valid before using it
+      try {
+        const targetSelector = this.getAttribute('href');
+        // Basic check for potentially invalid selectors (though not exhaustive)
+        if (targetSelector && targetSelector.length > 1) { 
+          const targetElement = document.querySelector(targetSelector);
+          if (targetElement) {
+            targetElement.scrollIntoView({
+              behavior: 'smooth'
+            });
+          } else {
+            console.warn('Smooth scroll target not found:', targetSelector);
+          }
+        } else {
+           console.warn('Invalid href for smooth scroll:', targetSelector);
+        }
+      } catch (error) {
+        console.error('Error during smooth scroll:', error, 'Selector:', this.getAttribute('href'));
+        // Fallback or alternative behavior if needed
+        // For example, try getElementById if it's just an ID
+        const targetId = this.getAttribute('href').slice(1);
+        try {
+            const targetElementById = document.getElementById(decodeURIComponent(targetId));
+            if (targetElementById) {
+                targetElementById.scrollIntoView({ behavior: 'smooth' });
+            }
+        } catch (idError) {
+             console.error('Fallback getElementById also failed:', idError);
+        }
+      }
+    });
+  });
+});
+</script>
+<script src="/js/toc.js"></script>
+
+<!-- Scripts -->
+<script>
+  // 将语言文件中的翻译传递给前端
+  window.HEXO_CONFIG = {
+    language: "zh-CN",
+    search_placeholder: "输入关键词搜索...",
+    search_no_results: "未找到相关结果",
+    search_result: "نتيجة",
+    search_results: "搜索结果",
+    search_results_found: "找到 undefined 个结果",
+    search_in: "搜索范围",
+    search_in_title: "标题",
+    search_in_content: "内容",
+    search_in_tags: "标签",
+    search_in_categories: "分类",
+    search_filters: "搜索过滤器",
+    search_recent: "最近搜索",
+    search_clear: "清除",
+    search_loading: "加载中...",
+    search_error: "加载搜索数据时出错"
+  };
+</script>
+
+
+
+<!-- 添加所有需要的脚本 -->
+<script src="/js/main.js"></script>
+<script src="/js/search.js"></script>
+
+
+    <script>
+      // 移动端菜单切换
+      $(document).ready(function() {
+        $('.mobile-menu-toggle').click(function() {
+          $('.sidebar-explorer').toggleClass('show');
+        });
+      });
+    </script>
+  </body>
+</html>

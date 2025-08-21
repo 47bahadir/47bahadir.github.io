@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>函数Hook技术（Trampoline 蹦床） | BHD Tec</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="/image/logo/bit.ico">
+  <link rel="shortcut icon" type="image/x-icon" href="/image/logo/bit.ico">
+
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+  <!-- 添加代码高亮样式 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
+  <!-- 添加highlight.js库 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+  <!-- 添加mermaid.js库 -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <link rel="stylesheet" href="/css/code.css">
+  <link rel="stylesheet" href="/css/code-custom.css">
+  <link rel="stylesheet" href="/css/code-languages.css">
+  <link rel="stylesheet" href="/css/mermaid.css">
+
+  <link rel="stylesheet" href="/css/vscode.css">
+  <link rel="stylesheet" href="/css/post.css">
+  <link rel="stylesheet" href="/css/tag.css">
+  <link rel="stylesheet" href="/css/categories.css">
+  <link rel="stylesheet" href="/css/archive.css">
+  <link rel="stylesheet" href="/css/search.css">
+  <link rel="stylesheet" href="/css/mobile.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+  <link rel="stylesheet" href="/css/elements.css">
+  <link rel="stylesheet" href="/css/statistics.css">
+
+  <!-- 添加 JetBrains Mono 字体 -->  
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- Add any custom head content here -->
+
+  <script src="/js/explorer.js"></script>
+  <script src="/js/code-copy.js"></script>
+  <script src="/js/code-enhance.js"></script>
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div class="wrapper">
+      <div class="mobile-menu-toggle">
+        <i class="fas fa-bars"></i>
+      </div>
+      <header class="vs-header">
+  <nav class="vs-nav">
+    <div class="nav-left">
+      <a href="/" class="nav-brand">
+        <i class="fas fa-terminal"></i>
+        BHD Tec
+      </a>
+    </div>
+    
+    <div class="nav-right">
+      <a href="/" class="nav-item ">
+        <i class="fas fa-home"></i>
+        <span>首页</span>
+      </a>
+      <a href="/archives/" class="nav-item ">
+        <i class="fas fa-archive"></i>
+        <span>归档</span>
+      </a>
+      <a href="/categories/" class="nav-item ">
+        <i class="fas fa-folder"></i>
+        <span>分类</span>
+      </a>
+      <a href="/tags/" class="nav-item ">
+        <i class="fas fa-tags"></i>
+        <span>标签</span>
+      </a>
+      <a href="/search/" class="nav-item ">
+        <i class="fas fa-search"></i>
+        <span>搜索</span>
+      </a>
+      <a href="/about/" class="nav-item ">
+        <i class="fas fa-info-circle"></i>
+        <span>关于</span>
+      </a>
+    </div>
+  </nav>
+</header>
+
+<script>
+  function smoothScroll(event, target) {
+    event.preventDefault();
+    const targetId = target.substring(target.indexOf('#') + 1);
+    const targetElement = document.getElementById(targetId);
+
+    if (targetElement) {
+      window.scrollTo({
+        top: targetElement.offsetTop - 50, // 调整偏移量
+        behavior: 'smooth'
+      });
+    } else {
+      window.location.href = target;
+    }
+  }
+
+  window.addEventListener('scroll', function() {
+    const header = document.querySelector('.vs-header');
+    const nav = document.querySelector('.vs-nav');
+    const scrollPercent = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+    
+    nav.style.setProperty('--scroll-percent', `${scrollPercent}%`);
+    
+    if (window.scrollY > 0) {
+      header.classList.add('scrolled');
+    } else {
+      header.classList.remove('scrolled');
+    }
+  });
+
+  // 添加标签页切换动画
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', function(e) {
+      const ripple = document.createElement('span');
+      ripple.classList.add('nav-ripple');
+      this.appendChild(ripple);
+      
+      const rect = this.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      ripple.style.left = `${x}px`;
+      ripple.style.top = `${y}px`;
+      
+      setTimeout(() => ripple.remove(), 1000);
+    });
+  });
+</script>
+
+
+<div class="vscode-container">
+  <!-- 左侧资源管理器 -->
+  <div class="sidebar-explorer">
+    <!-- TOC导航 -->
+    <div class="explorer-section">
+      <div class="section-header">
+        <i class="fas fa-list"></i>
+        <span>TABLE OF CONTENTS</span>
+      </div>
+      <div class="section-content">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%80%EF%BC%8C%E6%8A%80%E6%9C%AF%E4%BB%8B%E7%BB%8D"><span class="toc-text">一，技术介绍</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Trampoline%E5%92%8CDetour%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-text">Trampoline和Detour的区别</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-Dertour%EF%BC%88%E8%BD%AC%E5%90%91%EF%BC%89"><span class="toc-text">1.Dertour（转向）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-Trampoline%EF%BC%88%E8%B9%A6%E5%BA%8A%EF%BC%89"><span class="toc-text">2.Trampoline（蹦床）</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%EF%BC%8CHook%E5%87%BD%E6%95%B0%EF%BC%88Trampoline%EF%BC%89"><span class="toc-text">二，Hook函数（Trampoline）</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E5%87%BD%E6%95%B0%E7%9A%84%E5%AE%9A%E4%B9%89"><span class="toc-text">1.函数的定义</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-Trampoline%E5%87%BD%E6%95%B0%E7%9A%84%E5%AE%9E%E7%8E%B0"><span class="toc-text">2.Trampoline函数的实现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E5%AE%8C%E6%95%B4%E4%BB%A3%E7%A0%81"><span class="toc-text">3.完整代码</span></a></li></ol></li></ol>
+      </div>
+    </div>
+    
+    <!-- 同分类文章 -->
+    
+    <div class="explorer-section">
+      <div class="section-header">
+        <i class="fas fa-folder"></i>
+        <span>CATEGORY POSTS</span>
+      </div>
+      <div class="section-content">
+        
+          <div class="file">
+            <i class="fas fa-file-code"></i>
+            <a href="/2025/04/07/post8/">函数Hook技术（Detour 转向）</a>
+          </div>
+        
+          <div class="file">
+            <i class="fas fa-file-code"></i>
+            <a href="/2025/04/01/post7/">游戏函数调用技术</a>
+          </div>
+        
+          <div class="file">
+            <i class="fas fa-file-code"></i>
+            <a href="/2025/02/22/post1/">获取程序的PID和模块基址</a>
+          </div>
+        
+      </div>
+    </div>
+    
+    
+    <!-- 标签列表 -->
+    
+    <div class="explorer-section">
+      <div class="section-header">
+        <i class="fas fa-tags"></i>
+        <span>ARTICLE TAGS</span>
+      </div>
+      <div class="section-content">
+        
+          <div class="tag-item">
+            <i class="fas fa-tag"></i>
+            <a href="/tags/%E6%8A%80%E6%9C%AF/">技术</a>
+            <span class="count">(9)</span>
+          </div>
+        
+          <div class="tag-item">
+            <i class="fas fa-tag"></i>
+            <a href="/tags/C%E8%AF%AD%E8%A8%80/">C语言</a>
+            <span class="count">(4)</span>
+          </div>
+        
+          <div class="tag-item">
+            <i class="fas fa-tag"></i>
+            <a href="/tags/%E5%87%BD%E6%95%B0/">函数</a>
+            <span class="count">(4)</span>
+          </div>
+        
+          <div class="tag-item">
+            <i class="fas fa-tag"></i>
+            <a href="/tags/API/">API</a>
+            <span class="count">(4)</span>
+          </div>
+        
+      </div>
+    </div>
+    
+  </div>
+
+  <!-- 主要内容区域 -->
+  <div class="editor-content">
+    <div class="tab-bar">
+      <div class="tab active">
+        <i class="fas fa-file-alt"></i>
+        <span>函数Hook技术（Trampoline 蹦床）.md</span>
+      </div>
+    </div>
+    
+    <div class="content-area">
+      <article class="post-content">
+        <div class="post-header">
+          <h1>函数Hook技术（Trampoline 蹦床）</h1>
+          <div class="post-meta">
+            <span class="date">
+              <i class="fas fa-calendar-alt"></i>
+              2025-04-11
+            </span>            
+              <span class="categories">
+                <i class="fas fa-folder"></i>
+                <div class="categories-list">
+                  <ul class="category-item-post-list"><li class="category-item-post-list-item"><a class="category-item-post-list-link" href="/categories/%E6%8A%80%E6%9C%AF%E5%88%86%E4%BA%AB/">技术分享</a></li></ul>
+                </div>
+              </span>
+            
+            
+              <span class="tags">
+                <i class="fas fa-tags"></i>
+                <div class="tags-list">
+                  <ul class="tag-item-post-list" itemprop="keywords"><li class="tag-item-post-list-item"><a class="tag-item-post-list-link" href="/tags/API/" rel="tag">API</a></li><li class="tag-item-post-list-item"><a class="tag-item-post-list-link" href="/tags/C%E8%AF%AD%E8%A8%80/" rel="tag">C语言</a></li><li class="tag-item-post-list-item"><a class="tag-item-post-list-link" href="/tags/%E5%87%BD%E6%95%B0/" rel="tag">函数</a></li><li class="tag-item-post-list-item"><a class="tag-item-post-list-link" href="/tags/%E6%8A%80%E6%9C%AF/" rel="tag">技术</a></li></ul>
+                </div>
+              </span>
+            
+          </div>
+        </div>
+        
+        <div class="post-body vscode-markdown">
+          <p>这一期主要分享Hook中的Trampoline（蹦床）技术，这个相当于是Detour的进化版。Trampoline的最大的优势是解决Detour调用被Hook函数带来的无限递归问题。</p>
+<hr>
+<h1 id="一，技术介绍"><a href="#一，技术介绍" class="headerlink" title="一，技术介绍"></a>一，技术介绍</h1><h2 id="Trampoline和Detour的区别"><a href="#Trampoline和Detour的区别" class="headerlink" title="Trampoline和Detour的区别"></a>Trampoline和Detour的区别</h2><h3 id="1-Dertour（转向）"><a href="#1-Dertour（转向）" class="headerlink" title="1.Dertour（转向）"></a>1.Dertour（转向）</h3><p>结合上一期内容Detour是拦截目标函数并把代码重定向到自己的函数（Hook函数）当中。比如当程序正常调用一个目标函数时实际上执行的是被我们修改后的指令，通过插入的Jmp指令让CPU跳转到我们的代码。本质就是拦截和重定向目标函数。</p>
+<p>举例：汽车正常形式的一条公路上，我们设立了个路障（拦截）和指示牌（转向），强制让所有车开往我们指定的一条小路（Hook函数）上。</p>
+<h3 id="2-Trampoline（蹦床）"><a href="#2-Trampoline（蹦床）" class="headerlink" title="2.Trampoline（蹦床）"></a>2.Trampoline（蹦床）</h3><p>跟Detour不同的是，在实行Detour之前先备份被窃取的字节（原始指令），再分配一块内存空间（Trampoline空间）存放原始指令。在这原始指令后面紧接着一个Jmp指令用来跳转回被窃取的字节之后的位置，继续执行原始函数的剩余部分。这样就达到了备份原始指令的目的，我们先通过Detour跳转到我们的Hook函数执行想要的功能逻辑（如果Hook函数当中我们需要调用原始指令的话直接调用Trampoline的地址就行了）。执行完Hook函数之后CPU会跳转到Trampoline，Trampoline会执行之前备份好的原始指令，然后通过Trampoline中的Jmp指令跳转回原始函数继续执行。本质上可以在自己的函数当中可以随意调用原函数避免出现递归循环问题。</p>
+<p>举例：跟上面的公路举例中，在设置的路障旁边修建一条匝道（Trampoline），这个匝道包含被我们通过路障覆盖掉的原始公路的一部分（备份原始指令），匝道的尽头就是原始公路路障后面的部分。当车进入我们的小路（Hook函数）后，必须经过我们新修建的匝道（Trampoline）才能会到主公路的后面部分继续行驶。</p>
+<img src="\image\post_image\post9\S1.png" alt="S1" style="zoom: 67%;" />
+
+<h1 id="二，Hook函数（Trampoline）"><a href="#二，Hook函数（Trampoline）" class="headerlink" title="二，Hook函数（Trampoline）"></a>二，Hook函数（Trampoline）</h1><h2 id="1-函数的定义"><a href="#1-函数的定义" class="headerlink" title="1.函数的定义"></a>1.函数的定义</h2><p>首先是函数的声明，跟Detour创建的Hook函数一样需要三个参数。分别是想要拦截的目标函数地址，指向我们自定义的Hook函数的地址，需要被窃取的字节长度：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> * <span class="hljs-title">TrampolineHook</span><span class="hljs-params">(<span class="hljs-type">void</span> * toHook, <span class="hljs-type">void</span> * ourFunct, <span class="hljs-type">int</span> len)</span></span>;<br></code></pre></td></tr></table></figure>
+
+<p>第一步跟之前一样先判断被窃取的字节长度是否小于5个字节，是的话就没有办法完整的写入Detour所需要的跳转指令返回NULL表示失败：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">if</span> (len &lt; <span class="hljs-number">5</span>) <span class="hljs-keyword">return</span> <span class="hljs-literal">NULL</span>;<br></code></pre></td></tr></table></figure>
+
+<p>之后可以为存放 Trampoline 代码分配一个新的内存空间，这里通过调用 Windows API 函数 <a target="_blank" rel="noopener" href="https://learn.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-virtualalloc">VirtualAlloc</a> 来实现。这个函数接受4个参数：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function">LPVOID <span class="hljs-title">VirtualAlloc</span><span class="hljs-params">(</span></span><br><span class="hljs-params"><span class="hljs-function">  [in, optional] LPVOID lpAddress,</span></span><br><span class="hljs-params"><span class="hljs-function">  [in]           SIZE_T dwSize,</span></span><br><span class="hljs-params"><span class="hljs-function">  [in]           DWORD  flAllocationType,</span></span><br><span class="hljs-params"><span class="hljs-function">  [in]           DWORD  flProtect</span></span><br><span class="hljs-params"><span class="hljs-function">)</span></span>;<br></code></pre></td></tr></table></figure>
+
+<p>根据介绍第一个参数是分配的内存起始地址填写 <code>NULL</code> 参数会让系统自动选择分配的基地址，第二个参数是分配内存区域的大小填写 <code>len+5</code> 后面的5代表跳转指令的长度，第三个参数填写 <code>MEM_COMMIT | MEM_RESERVE</code> 表示直接完成内存的预留和提交可以立即让内存区域可用，第四个参数 <code>PAGE_EXECUTE_READWRITE</code> 让这块地址的拥有执行权限和读写权限。</p>
+<p>此函数返回成功能得到新创建的内存区域地址，把这个地址存储在 trampoLine 指针当中：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-type">void</span> * trampoLine = <span class="hljs-built_in">VirtualAlloc</span>(<span class="hljs-literal">NULL</span>, len + <span class="hljs-number">5</span>, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);<br></code></pre></td></tr></table></figure>
+
+<p>得到了新内存区域后通过 <a target="_blank" rel="noopener" href="https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/memcpy-wmemcpy?view=msvc-170">memcpy</a> 函数把原始指令复制到 trampoLine 区域当中：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-built_in">memcpy</span>(trampoLine, toHook, len);<br></code></pre></td></tr></table></figure>
+
+<p>原始指令后需要跳转到原函数的后面部分去才行，所以这里要先计算跳转回原始函数的地址：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-type">uintptr_t</span>  trampoJmpAddy = ((<span class="hljs-type">uintptr_t</span>)toHook - (<span class="hljs-type">uintptr_t</span>)trampoLine) - <span class="hljs-number">5</span>;<br></code></pre></td></tr></table></figure>
+
+<p>将 Jmp 指令的操作码写入内存区域，<code>0xE9</code> 是Jmp指令的操作码。 <code>(uintptr_t)trampoLine + len</code> 计算出原始指令之后的第一个字节处：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++">*(BYTE*)((<span class="hljs-type">uintptr_t</span>)trampoLine + len) = <span class="hljs-number">0xE9</span>;<br></code></pre></td></tr></table></figure>
+
+<p>Jmp指令后面紧接着需要跳转的地址，这个地址在上面计算过，直接写入即可：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++">*(<span class="hljs-type">uintptr_t</span> *)((<span class="hljs-type">uintptr_t</span>)trampoLine + len + <span class="hljs-number">1</span>) = trampoJmpAddy;<br></code></pre></td></tr></table></figure>
+
+<p>现在就可以执行Detour操作来修改目标函数了，这里为了方便可以直接调用在上一期创建的myHook函数：</p>
+<figure class="highlight scss"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs scss"><span class="hljs-built_in">myHook</span>(toHook, ourFunct, len);<br></code></pre></td></tr></table></figure>
+
+<p>根据前面所讲执行完我们的Hook函数之后就可以返回 Trampoline 的地址：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">return</span> trampoLine;<br></code></pre></td></tr></table></figure>
+
+<p>下面是完整的代码：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> * <span class="hljs-title">TrampolineHook</span><span class="hljs-params">(<span class="hljs-type">void</span> * toHook, <span class="hljs-type">void</span> * ourFunct, <span class="hljs-type">int</span> len)</span></span><br><span class="hljs-function"></span>&#123;<br>	<span class="hljs-keyword">if</span> (len &lt; <span class="hljs-number">5</span>) <span class="hljs-keyword">return</span> <span class="hljs-literal">NULL</span>;<br><br>	<span class="hljs-type">void</span> * trampoLine = <span class="hljs-built_in">VirtualAlloc</span>(<span class="hljs-literal">NULL</span>, len + <span class="hljs-number">5</span>, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);<br><br>	<span class="hljs-built_in">memcpy</span>(trampoLine, toHook, len);<br><br>	<span class="hljs-type">uintptr_t</span>  trampoJmpAddy = ((<span class="hljs-type">uintptr_t</span>)toHook - (<span class="hljs-type">uintptr_t</span>)trampoLine) - <span class="hljs-number">5</span>;<br><br>	*(BYTE*)((<span class="hljs-type">uintptr_t</span>)trampoLine + len) = <span class="hljs-number">0xE9</span>;<br><br>	*(<span class="hljs-type">uintptr_t</span> *)((<span class="hljs-type">uintptr_t</span>)trampoLine + len + <span class="hljs-number">1</span>) = trampoJmpAddy;<br><br>	<span class="hljs-built_in">Hook</span>(toHook, ourFunct, len);<br><br>	<span class="hljs-keyword">return</span> trampoLine;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="2-Trampoline函数的实现"><a href="#2-Trampoline函数的实现" class="headerlink" title="2.Trampoline函数的实现"></a>2.Trampoline函数的实现</h2><p>这里我就拿经典的 FPS 游戏 AssaultCube 来举例，这个游戏的渲染是通过 <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/OpenGL">OpenGL</a> 中的 wglSwapBuffers 函数来实现的。通过 IDA 查看 ac_client.exe 中的 Imports 就能搜到此函数的依赖：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apl">004DA3E0		SDL_GL_SwapBuffers	SDL<br></code></pre></td></tr></table></figure>
+
+<p>确认了是OpenGL库之后通过 IDA 打开 opengl32.dll 搜索 Exports 窗口中的 wglSwapBuffers 函数：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apl">wglSwapBuffers	6923D080	362<br></code></pre></td></tr></table></figure>
+
+<p>双击进入此函数查看函数声明，因为不修改函数内部逻辑所以不用分析函数实现：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">int</span> __stdcall <span class="hljs-title">wglSwapBuffers</span><span class="hljs-params">(HDC hDC)</span></span>;<br></code></pre></td></tr></table></figure>
+
+<p>可以看到 stdcall 调用约定，返回类型为 int ，接受一个HDC类型参数的函数。那么我们通过 typedef 定义一个函数指针类型 wglSwapBuffers ，再声明一个全局函数指针变量用来存储<strong>原始函数的地址</strong>和 <strong>Trampoline 地址</strong>：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-keyword">typedef</span> <span class="hljs-title">int</span><span class="hljs-params">(__stdcall* p_wglSwapBuffers)</span><span class="hljs-params">(HDC hDC)</span></span>;<br>p_wglSwapBuffers o_wglSwapBuffers;<br></code></pre></td></tr></table></figure>
+
+<p>创建我们的Hook函数用来“替代”原始的 wglSwapBuffers ，每次调用 wglSwapBuffers 时会先调用我们的Hook函数。在 Hook 函数中先执行一段自己想要的代码最后再跳转到 Trampoline 函数：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">int</span> __stdcall <span class="hljs-title">hook_wglSwapBuffers</span><span class="hljs-params">(HDC hDC)</span></span><br><span class="hljs-function"></span>&#123;<br>	<span class="hljs-comment">//自己的代码</span><br>	<span class="hljs-keyword">return</span> <span class="hljs-built_in">o_wglSwapBuffers</span>(hDC);		<span class="hljs-comment">//跳转到 Trampoline 函数</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>这样以来我们就写完了Hook函数，之后在我们的线程创建处要调用此钩子函数之前先把原始函数 wglSwapBuffers 的地址存放到之前声明的 o_wglSwapBuffers 当中：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++">o_wglSwapBuffers = (p_wglSwapBuffers)<span class="hljs-built_in">GetProcAddress</span>(<span class="hljs-built_in">GetModuleHandle</span>(<span class="hljs-string">L&quot;opengl32.dll&quot;</span>), <span class="hljs-string">&quot;wglSwapBuffers&quot;</span>);		<span class="hljs-comment">//自动获取原始 wglSwapBuffers 的地址</span><br></code></pre></td></tr></table></figure>
+
+<p>然后就可以正常调用我们的 TrampolineHook 函数了，<strong>最重要的一点</strong>是要把此函数返回的新内存地址（Trampoline函数地址）赋值给 o_wglSwapBuffers 变量。这样就能实现完整的Hook了，要是这里不改  o_wglSwapBuffers 变量的值，一直保持原始函数地址的话会无限递归导致栈溢出程序崩溃：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++">o_wglSwapBuffers = (p_wglSwapBuffers)mem::<span class="hljs-built_in">TrampolineHook</span>((<span class="hljs-type">void</span>*)o_wglSwapBuffers, (<span class="hljs-type">void</span>*)hook_wglSwapBuffers, <span class="hljs-number">5</span>);<br></code></pre></td></tr></table></figure>
+
+<p>在游戏中注入线程之后通过 Cheat Engine 查看 wglSwapBuffers 函数：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs assembly">OPENGL32.dll+3D07D - CC                    - int 3 <br>OPENGL32.dll+3D07E - CC                    - int 3 <br>OPENGL32.dll+3D07F - CC                    - int 3 <br>OPENGL32.dll+3D080 - E9 C644BA19           - jmp AssaultCube_TrampolineHook.dll+1154B	;这里被Hook了<br>OPENGL32.dll+3D085 - 83 E4 F8              - and esp,-08 &#123; 248 &#125;<br>OPENGL32.dll+3D088 - 83 EC 14              - sub esp,14 &#123; 20 &#125;<br>OPENGL32.dll+3D08B - 53                    - push ebx<br><br></code></pre></td></tr></table></figure>
+
+<p>加个断点一步步执行就能调转到Hook函数：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs assembly">AssaultCube_TrampolineHook.dll+158CC - CC                    - int 3 <br>AssaultCube_TrampolineHook.dll+158CD - CC                    - int 3 <br>AssaultCube_TrampolineHook.dll+158CE - CC                    - int 3 <br>AssaultCube_TrampolineHook.dll+158CF - CC                    - int 3 <br>AssaultCube_TrampolineHook.dll+158D0 - 55                    - push ebp		;Hook函数开始处<br>AssaultCube_TrampolineHook.dll+158D1 - 8B EC                 - mov ebp,esp<br>AssaultCube_TrampolineHook.dll+158D3 - 81 EC 8C010000        - sub esp,0000018C &#123; 396 &#125;<br>AssaultCube_TrampolineHook.dll+158D9 - 53                    - push ebx<br>AssaultCube_TrampolineHook.dll+158DA - 56                    - push esi<br>AssaultCube_TrampolineHook.dll+158DB - 57                    - push edi<br><br></code></pre></td></tr></table></figure>
+
+<p>Visual Studio 的调试器显示了所有变量的地址，Cheat Engine 调转到蹦床函数的地址就能看到新创建的内存空间：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs assembly">00FFFFFF -                       - ?? <br>01000000 - 8B FF                 - mov edi,edi				;Trampoline 函数开始处执行原始指令<br>01000002 - 55                    - push ebp<br>01000003 - 8B EC                 - mov ebp,esp<br>01000005 - E9 7BD05360           - jmp OPENGL32.dll+3D085		;跳转回原函数后续<br>0100000A - 00 00                 - add [eax],al<br><br></code></pre></td></tr></table></figure>
+
+<p>对此产生迷惑可以通过 Visual Studio 和 Cheat Engine进行配合调试一步步执行代码进行学习。</p>
+<h2 id="3-完整代码"><a href="#3-完整代码" class="headerlink" title="3.完整代码"></a>3.完整代码</h2><p>下面是完整带注释的代码可自行实践学习：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// 获取游戏主模块的基址，用于后续计算游戏内存中各功能的地址</span><br><span class="hljs-type">uintptr_t</span> baseAddress = (<span class="hljs-type">uintptr_t</span>)<span class="hljs-built_in">GetModuleHandle</span>(<span class="hljs-string">L&quot;ac_client.exe&quot;</span>);<br><span class="hljs-comment">// 获取OpenGL模块的基址，用于定位图形API函数</span><br><span class="hljs-type">uintptr_t</span> openglAddress = (<span class="hljs-type">uintptr_t</span>)<span class="hljs-built_in">GetModuleHandle</span>(<span class="hljs-string">L&quot;opengl32.dll&quot;</span>);<br><br><span class="hljs-comment">// 定义函数指针类型，用于存储原始的wglSwapBuffers函数</span><br><span class="hljs-comment">// __stdcall是Windows API常用的调用约定，确保参数从右到左入栈，由被调用者清理栈</span><br><span class="hljs-function"><span class="hljs-keyword">typedef</span> <span class="hljs-title">int</span><span class="hljs-params">(__stdcall* p_wglSwapBuffers)</span><span class="hljs-params">(HDC hDC)</span></span>;<br><span class="hljs-comment">// 声明一个函数指针，将用于保存原始的wglSwapBuffers函数地址</span><br>p_wglSwapBuffers o_wglSwapBuffers;<br><br><br><span class="hljs-comment">// 自定义的wglSwapBuffers钩子函数，在每帧渲染完成后被调用</span><br><span class="hljs-comment">// 参数hDC是设备上下文句柄，标识了要交换缓冲区的窗口</span><br><span class="hljs-function"><span class="hljs-type">int</span> __stdcall <span class="hljs-title">hook_wglSwapBuffers</span><span class="hljs-params">(HDC hDC)</span></span><br><span class="hljs-function"></span>&#123;<br>    <span class="hljs-comment">// 声明三个布尔变量，用于跟踪各个作弊功能的开关状态</span><br>    <span class="hljs-type">bool</span> bHealth = <span class="hljs-literal">false</span>, bAmmo = <span class="hljs-literal">false</span>, bRecoil = <span class="hljs-literal">false</span>;<br><br>    <span class="hljs-comment">// 计算玩家对象的基址，通过游戏基址加上固定偏移0x10f4f4</span><br>    <span class="hljs-type">uintptr_t</span> playerBase = baseAddress + <span class="hljs-number">0x10f4f4</span>;<br>    <span class="hljs-comment">// 使用多级指针寻址找到玩家血量的内存地址，偏移为0xf8</span><br>    <span class="hljs-type">uintptr_t</span> healthPtr = mem::<span class="hljs-built_in">findDMMAddy</span>(playerBase, &#123; <span class="hljs-number">0xf8</span> &#125;);<br>    <span class="hljs-comment">// 使用多级指针寻址找到玩家弹药的内存地址，偏移链为0x374-&gt;0x14-&gt;0x0</span><br>    <span class="hljs-type">uintptr_t</span> ammoPtr = mem::<span class="hljs-built_in">findDMMAddy</span>(playerBase, &#123; <span class="hljs-number">0x374</span>,<span class="hljs-number">0x14</span>,<span class="hljs-number">0x0</span> &#125;);<br><br>    <span class="hljs-comment">// 设置要写入的新值为1337，用于修改血量和弹药</span><br>    <span class="hljs-type">int</span> newValue = <span class="hljs-number">1337</span>;<br><br>    <span class="hljs-comment">// 检测小键盘1键是否被按下（按一次切换一次状态）</span><br>    <span class="hljs-comment">// GetAsyncKeyState返回值的最低位(0x1)表示按键是否在上次调用后被按下</span><br>    <span class="hljs-keyword">if</span> (<span class="hljs-built_in">GetAsyncKeyState</span>(VK_NUMPAD1) &amp; <span class="hljs-number">1</span>)<br>    &#123;<br>        <span class="hljs-comment">// 切换无限血量功能的开关状态</span><br>        bHealth = !bHealth;<br>    &#125;<br><br>    <span class="hljs-comment">// 检测小键盘2键是否被按下</span><br>    <span class="hljs-keyword">if</span> (<span class="hljs-built_in">GetAsyncKeyState</span>(VK_NUMPAD2) &amp; <span class="hljs-number">1</span>)<br>    &#123;<br>        <span class="hljs-comment">// 切换无限弹药功能的开关状态</span><br>        bAmmo = !bAmmo;<br>    &#125;<br><br>    <span class="hljs-comment">// 检测小键盘3键是否被按下</span><br>    <span class="hljs-keyword">if</span> (<span class="hljs-built_in">GetAsyncKeyState</span>(VK_NUMPAD3) &amp; <span class="hljs-number">1</span>)<br>    &#123;<br>        <span class="hljs-comment">// 切换无后座力功能的开关状态</span><br>        bRecoil = !bRecoil;<br><br>        <span class="hljs-keyword">if</span> (bRecoil)<br>        &#123;<br>            <span class="hljs-comment">// 如果启用无后座力，则使用NOP指令(0x90)覆盖游戏中处理后座力的代码</span><br>            <span class="hljs-comment">// 这会使游戏在执行到这段代码时不做任何操作，从而消除后座力</span><br>            mem::<span class="hljs-built_in">nopPatch</span>((BYTE*)(baseAddress + <span class="hljs-number">0x63786</span>), <span class="hljs-number">10</span>);<br>        &#125;<br>        <span class="hljs-keyword">else</span><br>        &#123;<br>            <span class="hljs-comment">// 如果禁用无后座力，则恢复原始的后座力处理代码</span><br>            <span class="hljs-comment">// 这段十六进制代码是游戏原本用于计算后座力效果的指令</span><br>            mem::<span class="hljs-built_in">writePatch</span>((BYTE*)(baseAddress + <span class="hljs-number">0x63786</span>), (BYTE*)(<span class="hljs-string">&quot;\x50\x8d\x4c\x24\x1c\x51\x8b\xce\xff\xd2&quot;</span>), <span class="hljs-number">10</span>);<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-comment">// 检查玩家基址是否有效，防止在玩家不存在时进行内存操作导致崩溃</span><br>    <span class="hljs-keyword">if</span> (playerBase)<br>    &#123;<br>        <span class="hljs-comment">// 如果无限血量功能已启用</span><br>        <span class="hljs-keyword">if</span> (bHealth)<br>        &#123;<br>            <span class="hljs-comment">// 将新值(1337)写入到玩家血量地址，4表示写入4个字节(int类型大小)</span><br>            mem::<span class="hljs-built_in">writePatch</span>((BYTE*)healthPtr, (BYTE*)&amp;newValue, <span class="hljs-number">4</span>);<br>        &#125;<br><br>        <span class="hljs-comment">// 如果无限弹药功能已启用</span><br>        <span class="hljs-keyword">if</span> (bAmmo)<br>        &#123;<br>            <span class="hljs-comment">// 将新值(1337)写入到玩家弹药地址</span><br>            mem::<span class="hljs-built_in">writePatch</span>((BYTE*)ammoPtr, (BYTE*)&amp;newValue, <span class="hljs-number">4</span>);<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-comment">// 调用原始的wglSwapBuffers函数完成缓冲区交换，确保游戏正常显示</span><br>    <span class="hljs-comment">// 这是钩子函数的最后一步，必须执行以保持游戏画面更新</span><br>    <span class="hljs-keyword">return</span> <span class="hljs-built_in">o_wglSwapBuffers</span>(hDC);<br>&#125;<br><br><br><span class="hljs-comment">// 作弊功能的主线程函数，在DLL注入后由一个新线程执行</span><br><span class="hljs-function">DWORD WINAPI <span class="hljs-title">HackThread</span><span class="hljs-params">(HMODULE hModule)</span></span><br><span class="hljs-function"></span>&#123;<br>    <span class="hljs-comment">// 获取OpenGL32.dll中wglSwapBuffers函数的原始地址</span><br>    <span class="hljs-comment">// GetProcAddress用于从DLL中获取导出函数的地址</span><br>    o_wglSwapBuffers = (p_wglSwapBuffers)<span class="hljs-built_in">GetProcAddress</span>(<span class="hljs-built_in">GetModuleHandle</span>(<span class="hljs-string">L&quot;opengl32.dll&quot;</span>), <span class="hljs-string">&quot;wglSwapBuffers&quot;</span>);<br>    <br>    <span class="hljs-comment">// 使用蹦床钩子技术钩住wglSwapBuffers函数</span><br>    <span class="hljs-comment">// 将原始函数入口点的前5个字节替换为跳转指令，指向我们的hook_wglSwapBuffers函数</span><br>    <span class="hljs-comment">// 同时创建一个蹦床，保存原始函数的执行流程，返回值是可以调用原始函数的地址</span><br>    o_wglSwapBuffers = (p_wglSwapBuffers)mem::<span class="hljs-built_in">TrampolineHook</span>((<span class="hljs-type">void</span>*)o_wglSwapBuffers, (<span class="hljs-type">void</span>*)hook_wglSwapBuffers, <span class="hljs-number">5</span>);<br><br>    <span class="hljs-comment">// 线程函数返回0，表示成功完成</span><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br><br><span class="hljs-comment">// DLL入口点函数，当DLL被加载或卸载时由系统调用</span><br><span class="hljs-function">BOOL APIENTRY <span class="hljs-title">DllMain</span><span class="hljs-params">( HMODULE hModule,       <span class="hljs-comment">// 当前DLL的句柄</span></span></span><br><span class="hljs-params"><span class="hljs-function">                       DWORD  ul_reason_for_call,  <span class="hljs-comment">// 调用原因</span></span></span><br><span class="hljs-params"><span class="hljs-function">                       LPVOID lpReserved           <span class="hljs-comment">// 保留参数</span></span></span><br><span class="hljs-params"><span class="hljs-function">                     )</span></span><br><span class="hljs-function"></span>&#123;<br>    <span class="hljs-comment">// 根据不同的调用原因执行不同的操作</span><br>    <span class="hljs-keyword">switch</span> (ul_reason_for_call)<br>    &#123;<br>    <span class="hljs-keyword">case</span> DLL_PROCESS_ATTACH:  <span class="hljs-comment">// 当DLL被加载到进程时</span><br>    &#123;<br>        <span class="hljs-comment">// 创建一个新线程来执行作弊功能</span><br>        <span class="hljs-comment">// 这样做是为了避免在DllMain中执行过多代码，因为DllMain有严格的限制</span><br>        HANDLE hThread = <span class="hljs-literal">nullptr</span>;<br>        hThread = <span class="hljs-built_in">CreateThread</span>(<span class="hljs-literal">nullptr</span>, <span class="hljs-number">0</span>, (LPTHREAD_START_ROUTINE)HackThread, hModule, <span class="hljs-number">0</span>, <span class="hljs-literal">nullptr</span>);<br><br>        <span class="hljs-comment">// 如果线程创建成功，关闭线程句柄</span><br>        <span class="hljs-comment">// 我们不需要等待线程结束，所以可以立即关闭句柄</span><br>        <span class="hljs-keyword">if</span> (hThread)<br>        &#123;<br>            <span class="hljs-built_in">CloseHandle</span>(hThread);<br>        &#125;<br>    &#125;<br>    <span class="hljs-keyword">case</span> DLL_THREAD_ATTACH:  <span class="hljs-comment">// 当进程创建新线程时</span><br>    <span class="hljs-keyword">case</span> DLL_THREAD_DETACH:  <span class="hljs-comment">// 当线程退出时</span><br>    <span class="hljs-keyword">case</span> DLL_PROCESS_DETACH:  <span class="hljs-comment">// 当DLL从进程中卸载时</span><br>        <span class="hljs-keyword">break</span>;<br>    &#125;<br>    <span class="hljs-comment">// 返回TRUE表示DLL初始化成功</span><br>    <span class="hljs-keyword">return</span> TRUE;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>每一种Hook技术都有各自的优势和缺点，根据当时的情况来选择适合的技术才是最优解，后续我会继续补充其他的Hook技术。文章当中有需要更改的部分请在评论区指出或者联系我个人邮箱进行反馈，谢谢观看！</p>
+
+        </div>
+        
+        <!-- 文章导航 -->
+        <nav class="post-nav">
+          
+          
+            <a class="next" href="/2025/04/07/post8/">
+              函数Hook技术（Detour 转向）
+              <i class="fas fa-chevron-right"></i>
+            </a>
+          
+        </nav>
+      </article>
+    </div>
+  </div>
+</div>
+
+    </div>
+    <footer class="footer">
+  <div class="status-bar">
+    <div class="status-item">
+      <i class="fas fa-code-branch"></i>
+      master
+    </div>
+    <div class="status-item">
+      <i class="fas fa-sync"></i>
+      bahadir
+    </div>
+    <div class="status-item">
+      <i class="fas fa-clock"></i>
+      2025-08-21
+    </div>
+    <div class="status-item">
+      Designed By&nbsp; <a href="https://github.com/47bahadir" target="_blank"> bahadir</a>
+    </div>
+    <div class="status-item github">
+      <a href="https://github.com/47bahadir" target="_blank">
+        <i class="fab fa-github"></i>
+      </a>
+    </div>
+    <div class="status-item" id="site-runtime" style="margin-left: auto;">
+      <i class="fas fa-heartbeat"></i>
+      <span id="runtime-text">Site running for...</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+// 网站运行时间计算器
+function updateSiteRuntime() {
+  // 设置网站启动时间 (请根据实际情况修改这个日期)
+  const startDate = new Date('2025-02-22 00:00:00'); // 修改为你的网站启动日期
+  const now = new Date();
+  const timeDiff = now - startDate;
+
+  // 计算天数、小时、分钟、秒数
+  const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+
+  // 更新显示文本
+  const runtimeText = `Site running for ${days} days ${hours} hours ${minutes} minutes ${seconds} seconds`;
+  const runtimeElement = document.getElementById('runtime-text');
+  if (runtimeElement) {
+    runtimeElement.textContent = runtimeText;
+  }
+}
+
+// 页面加载完成后开始计时
+document.addEventListener('DOMContentLoaded', function() {
+  updateSiteRuntime(); // 立即更新一次
+  setInterval(updateSiteRuntime, 1000); // 每秒更新一次
+});
+</script>
+
+    
+    <!-- 全局配置 -->
+    <script>
+      window.HEXO_CONFIG = {
+        language: "zh-CN",
+        root: "/"
+      };
+      
+      // 特定于搜索的配置
+      window.VSC4T_SEARCH = {
+        root: "/"
+      };
+    </script>
+    
+    <script src="//cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/highlight.js@11.7.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+    <!-- 这里可以放置自定义脚本 -->
+<script>
+document.addEventListener('DOMContentLoaded', (event) => {
+  // Apply smooth scroll to non-TOC anchor links
+  document.querySelectorAll('a[href^="#"]:not(.toc-link)').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+      e.preventDefault();
+      // Check if querySelector is valid before using it
+      try {
+        const targetSelector = this.getAttribute('href');
+        // Basic check for potentially invalid selectors (though not exhaustive)
+        if (targetSelector && targetSelector.length > 1) { 
+          const targetElement = document.querySelector(targetSelector);
+          if (targetElement) {
+            targetElement.scrollIntoView({
+              behavior: 'smooth'
+            });
+          } else {
+            console.warn('Smooth scroll target not found:', targetSelector);
+          }
+        } else {
+           console.warn('Invalid href for smooth scroll:', targetSelector);
+        }
+      } catch (error) {
+        console.error('Error during smooth scroll:', error, 'Selector:', this.getAttribute('href'));
+        // Fallback or alternative behavior if needed
+        // For example, try getElementById if it's just an ID
+        const targetId = this.getAttribute('href').slice(1);
+        try {
+            const targetElementById = document.getElementById(decodeURIComponent(targetId));
+            if (targetElementById) {
+                targetElementById.scrollIntoView({ behavior: 'smooth' });
+            }
+        } catch (idError) {
+             console.error('Fallback getElementById also failed:', idError);
+        }
+      }
+    });
+  });
+});
+</script>
+<script src="/js/toc.js"></script>
+
+<!-- Scripts -->
+<script>
+  // 将语言文件中的翻译传递给前端
+  window.HEXO_CONFIG = {
+    language: "zh-CN",
+    search_placeholder: "输入关键词搜索...",
+    search_no_results: "未找到相关结果",
+    search_result: "نتيجة",
+    search_results: "搜索结果",
+    search_results_found: "找到 undefined 个结果",
+    search_in: "搜索范围",
+    search_in_title: "标题",
+    search_in_content: "内容",
+    search_in_tags: "标签",
+    search_in_categories: "分类",
+    search_filters: "搜索过滤器",
+    search_recent: "最近搜索",
+    search_clear: "清除",
+    search_loading: "加载中...",
+    search_error: "加载搜索数据时出错"
+  };
+</script>
+
+
+
+<!-- 添加所有需要的脚本 -->
+<script src="/js/main.js"></script>
+<script src="/js/search.js"></script>
+
+
+    <script>
+      // 移动端菜单切换
+      $(document).ready(function() {
+        $('.mobile-menu-toggle').click(function() {
+          $('.sidebar-explorer').toggleClass('show');
+        });
+      });
+    </script>
+  </body>
+</html>

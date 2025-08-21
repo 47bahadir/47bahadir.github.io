@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>游戏函数调用技术 | BHD Tec</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="/image/logo/bit.ico">
+  <link rel="shortcut icon" type="image/x-icon" href="/image/logo/bit.ico">
+
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+  <!-- 添加代码高亮样式 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
+  <!-- 添加highlight.js库 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+  <!-- 添加mermaid.js库 -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <link rel="stylesheet" href="/css/code.css">
+  <link rel="stylesheet" href="/css/code-custom.css">
+  <link rel="stylesheet" href="/css/code-languages.css">
+  <link rel="stylesheet" href="/css/mermaid.css">
+
+  <link rel="stylesheet" href="/css/vscode.css">
+  <link rel="stylesheet" href="/css/post.css">
+  <link rel="stylesheet" href="/css/tag.css">
+  <link rel="stylesheet" href="/css/categories.css">
+  <link rel="stylesheet" href="/css/archive.css">
+  <link rel="stylesheet" href="/css/search.css">
+  <link rel="stylesheet" href="/css/mobile.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+  <link rel="stylesheet" href="/css/elements.css">
+  <link rel="stylesheet" href="/css/statistics.css">
+
+  <!-- 添加 JetBrains Mono 字体 -->  
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- Add any custom head content here -->
+
+  <script src="/js/explorer.js"></script>
+  <script src="/js/code-copy.js"></script>
+  <script src="/js/code-enhance.js"></script>
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div class="wrapper">
+      <div class="mobile-menu-toggle">
+        <i class="fas fa-bars"></i>
+      </div>
+      <header class="vs-header">
+  <nav class="vs-nav">
+    <div class="nav-left">
+      <a href="/" class="nav-brand">
+        <i class="fas fa-terminal"></i>
+        BHD Tec
+      </a>
+    </div>
+    
+    <div class="nav-right">
+      <a href="/" class="nav-item ">
+        <i class="fas fa-home"></i>
+        <span>首页</span>
+      </a>
+      <a href="/archives/" class="nav-item ">
+        <i class="fas fa-archive"></i>
+        <span>归档</span>
+      </a>
+      <a href="/categories/" class="nav-item ">
+        <i class="fas fa-folder"></i>
+        <span>分类</span>
+      </a>
+      <a href="/tags/" class="nav-item ">
+        <i class="fas fa-tags"></i>
+        <span>标签</span>
+      </a>
+      <a href="/search/" class="nav-item ">
+        <i class="fas fa-search"></i>
+        <span>搜索</span>
+      </a>
+      <a href="/about/" class="nav-item ">
+        <i class="fas fa-info-circle"></i>
+        <span>关于</span>
+      </a>
+    </div>
+  </nav>
+</header>
+
+<script>
+  function smoothScroll(event, target) {
+    event.preventDefault();
+    const targetId = target.substring(target.indexOf('#') + 1);
+    const targetElement = document.getElementById(targetId);
+
+    if (targetElement) {
+      window.scrollTo({
+        top: targetElement.offsetTop - 50, // 调整偏移量
+        behavior: 'smooth'
+      });
+    } else {
+      window.location.href = target;
+    }
+  }
+
+  window.addEventListener('scroll', function() {
+    const header = document.querySelector('.vs-header');
+    const nav = document.querySelector('.vs-nav');
+    const scrollPercent = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+    
+    nav.style.setProperty('--scroll-percent', `${scrollPercent}%`);
+    
+    if (window.scrollY > 0) {
+      header.classList.add('scrolled');
+    } else {
+      header.classList.remove('scrolled');
+    }
+  });
+
+  // 添加标签页切换动画
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', function(e) {
+      const ripple = document.createElement('span');
+      ripple.classList.add('nav-ripple');
+      this.appendChild(ripple);
+      
+      const rect = this.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      ripple.style.left = `${x}px`;
+      ripple.style.top = `${y}px`;
+      
+      setTimeout(() => ripple.remove(), 1000);
+    });
+  });
+</script>
+
+
+<div class="vscode-container">
+  <!-- 左侧资源管理器 -->
+  <div class="sidebar-explorer">
+    <!-- TOC导航 -->
+    <div class="explorer-section">
+      <div class="section-header">
+        <i class="fas fa-list"></i>
+        <span>TABLE OF CONTENTS</span>
+      </div>
+      <div class="section-content">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%80%EF%BC%8C%E6%8A%80%E6%9C%AF%E8%A7%A3%E6%9E%90"><span class="toc-text">一，技术解析</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E5%87%BD%E6%95%B0%E6%8C%87%E9%92%88%E7%9A%84%E5%AE%9A%E4%B9%89"><span class="toc-text">1.函数指针的定义</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E5%87%BD%E6%95%B0%E6%8C%87%E9%92%88%E7%9A%84%E8%B5%8B%E5%80%BC"><span class="toc-text">2.函数指针的赋值</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E5%87%BD%E6%95%B0%E6%8C%87%E9%92%88%E7%9A%84%E8%B0%83%E7%94%A8"><span class="toc-text">3.函数指针的调用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-%E4%B8%BE%E4%BE%8B%E8%AF%B4%E6%98%8E"><span class="toc-text">4.举例说明</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%EF%BC%8C%E5%AE%9E%E9%99%85%E6%BC%94%E7%A4%BA"><span class="toc-text">二，实际演示</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E6%97%A0%E5%8F%82%E5%87%BD%E6%95%B0%E7%9A%84%E8%B0%83%E7%94%A8"><span class="toc-text">1.无参函数的调用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%EF%BC%881%EF%BC%89%E7%A4%BA%E8%8C%83%E7%A8%8B%E5%BA%8F%E7%BC%96%E8%AF%91"><span class="toc-text">（1）示范程序编译</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%EF%BC%882%EF%BC%89%E8%B0%83%E8%AF%95%E5%8F%8D%E6%B1%87%E7%BC%96"><span class="toc-text">（2）调试反汇编</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%EF%BC%883%EF%BC%89Hook%E7%A8%8B%E5%BA%8F"><span class="toc-text">（3）Hook程序</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E6%9C%89%E5%8F%82%E5%87%BD%E6%95%B0%E7%9A%84%E8%B0%83%E7%94%A8"><span class="toc-text">2.有参函数的调用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%EF%BC%881%EF%BC%89%E7%A4%BA%E8%8C%83%E7%A8%8B%E5%BA%8F%E4%BF%AE%E6%94%B9"><span class="toc-text">（1）示范程序修改</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%EF%BC%882%EF%BC%89%E8%B0%83%E8%AF%95%E5%8F%8D%E6%B1%87%E7%BC%96-1"><span class="toc-text">（2）调试反汇编</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%EF%BC%883%EF%BC%89Hook%E7%A8%8B%E5%BA%8F-1"><span class="toc-text">（3）Hook程序</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-thiscall%E5%87%BD%E6%95%B0%E7%9A%84%E8%B0%83%E7%94%A8"><span class="toc-text">3.thiscall函数的调用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%EF%BC%881%EF%BC%89%E7%A4%BA%E8%8C%83%E7%A8%8B%E5%BA%8F%E4%BF%AE%E6%94%B9-1"><span class="toc-text">（1）示范程序修改</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%EF%BC%882%EF%BC%89%E8%B0%83%E5%BC%8F%E5%8F%8D%E6%B1%87%E7%BC%96"><span class="toc-text">（2）调式反汇编</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%EF%BC%883%EF%BC%89Hook%E7%A8%8B%E5%BA%8F-2"><span class="toc-text">（3）Hook程序</span></a></li></ol></li></ol></li></ol>
+      </div>
+    </div>
+    
+    <!-- 同分类文章 -->
+    
+    <div class="explorer-section">
+      <div class="section-header">
+        <i class="fas fa-folder"></i>
+        <span>CATEGORY POSTS</span>
+      </div>
+      <div class="section-content">
+        
+          <div class="file">
+            <i class="fas fa-file-code"></i>
+            <a href="/2025/04/11/post9/">函数Hook技术（Trampoline 蹦床）</a>
+          </div>
+        
+          <div class="file">
+            <i class="fas fa-file-code"></i>
+            <a href="/2025/04/07/post8/">函数Hook技术（Detour 转向）</a>
+          </div>
+        
+          <div class="file">
+            <i class="fas fa-file-code"></i>
+            <a href="/2025/02/22/post1/">获取程序的PID和模块基址</a>
+          </div>
+        
+      </div>
+    </div>
+    
+    
+    <!-- 标签列表 -->
+    
+    <div class="explorer-section">
+      <div class="section-header">
+        <i class="fas fa-tags"></i>
+        <span>ARTICLE TAGS</span>
+      </div>
+      <div class="section-content">
+        
+          <div class="tag-item">
+            <i class="fas fa-tag"></i>
+            <a href="/tags/%E6%8A%80%E6%9C%AF/">技术</a>
+            <span class="count">(9)</span>
+          </div>
+        
+          <div class="tag-item">
+            <i class="fas fa-tag"></i>
+            <a href="/tags/C%E8%AF%AD%E8%A8%80/">C语言</a>
+            <span class="count">(4)</span>
+          </div>
+        
+          <div class="tag-item">
+            <i class="fas fa-tag"></i>
+            <a href="/tags/%E5%87%BD%E6%95%B0/">函数</a>
+            <span class="count">(4)</span>
+          </div>
+        
+          <div class="tag-item">
+            <i class="fas fa-tag"></i>
+            <a href="/tags/API/">API</a>
+            <span class="count">(4)</span>
+          </div>
+        
+      </div>
+    </div>
+    
+  </div>
+
+  <!-- 主要内容区域 -->
+  <div class="editor-content">
+    <div class="tab-bar">
+      <div class="tab active">
+        <i class="fas fa-file-alt"></i>
+        <span>游戏函数调用技术.md</span>
+      </div>
+    </div>
+    
+    <div class="content-area">
+      <article class="post-content">
+        <div class="post-header">
+          <h1>游戏函数调用技术</h1>
+          <div class="post-meta">
+            <span class="date">
+              <i class="fas fa-calendar-alt"></i>
+              2025-04-01
+            </span>            
+              <span class="categories">
+                <i class="fas fa-folder"></i>
+                <div class="categories-list">
+                  <ul class="category-item-post-list"><li class="category-item-post-list-item"><a class="category-item-post-list-link" href="/categories/%E6%8A%80%E6%9C%AF%E5%88%86%E4%BA%AB/">技术分享</a></li></ul>
+                </div>
+              </span>
+            
+            
+              <span class="tags">
+                <i class="fas fa-tags"></i>
+                <div class="tags-list">
+                  <ul class="tag-item-post-list" itemprop="keywords"><li class="tag-item-post-list-item"><a class="tag-item-post-list-link" href="/tags/API/" rel="tag">API</a></li><li class="tag-item-post-list-item"><a class="tag-item-post-list-link" href="/tags/C%E8%AF%AD%E8%A8%80/" rel="tag">C语言</a></li><li class="tag-item-post-list-item"><a class="tag-item-post-list-link" href="/tags/%E5%87%BD%E6%95%B0/" rel="tag">函数</a></li><li class="tag-item-post-list-item"><a class="tag-item-post-list-link" href="/tags/%E6%8A%80%E6%9C%AF/" rel="tag">技术</a></li></ul>
+                </div>
+              </span>
+            
+          </div>
+        </div>
+        
+        <div class="post-body vscode-markdown">
+          <p>今天分享的新技术是怎么调用游戏当中的函数，这就引出一个新问题，为啥要调用游戏中的函数？虽然我们可以自己为游戏编写任何形式的函数来执行，但是有一部分复杂的函数是很难自己去写的。比如射线检测函数，游戏中成功定位到此函数的话就没必要单独再编写一份复杂的射线检测了，直接调用自带的函数即可。</p>
+<hr>
+<h1 id="一，技术解析"><a href="#一，技术解析" class="headerlink" title="一，技术解析"></a>一，技术解析</h1><p>这种技术一般被称为 “函数指针重定向” ，这项技术允许我们直接调用游戏内存中的函数，就跟调用自己写的函数一样。这项技术通常用于游戏模组开发，游戏外挂开发，调试工具开发等技术。以下是C++形式的大致原理讲解：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">//通过typedef定义函数指针</span><br><span class="hljs-keyword">typedef</span> <span class="hljs-type">cvar_t</span>*(__cdecl * _Cvar_Get)(<span class="hljs-type">const</span> <span class="hljs-type">char</span> *var_name, <span class="hljs-type">const</span> <span class="hljs-type">char</span> *var_value, <span class="hljs-type">int</span> flags);<br><br><span class="hljs-comment">//将函数指针进行实例化，将其内存指向指定地址</span><br>_Cvar_Get Cvar_Get = (_Cvar_Get)<span class="hljs-number">0x043F688</span>;<br><br><span class="hljs-comment">//调用函数</span><br><span class="hljs-built_in">Cvar_Get</span>(<span class="hljs-string">&quot;cl_gamepath&quot;</span>, <span class="hljs-string">&quot;OpenArena&quot;</span>, <span class="hljs-number">0</span>);<br></code></pre></td></tr></table></figure>
+
+<h2 id="1-函数指针的定义"><a href="#1-函数指针的定义" class="headerlink" title="1.函数指针的定义"></a>1.函数指针的定义</h2><p>第一行代码定义了一个新的类型，这个类型是一个函数指针名为 <strong>_Cvar_Get</strong> 。函数指针在C++当中的一般语法为：</p>
+<figure class="highlight scss"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs scss">返回类型 (调用约定 *指针名称)(参数列表)<br></code></pre></td></tr></table></figure>
+
+<p>这里的 <code>cvar_t*</code> 是函数的返回类型，说明函数会返回一个指向 <code>cvar_t</code> 结构体的指针。在IDA Pro的伪代码当中的第一行就能看到函数的返回类型。比如知道了游戏中的某一个需要调用的函数返回类型，那么调用时可以把返回类型写成IDA中看到的类型。</p>
+<p><code>__cdecl</code> 指的是函数的调用约定，调用约定是个很重要的概念，参数传递和栈的清理都是由这个来决定的。以下是常见的调用约定：</p>
+<ul>
+<li><strong>cdecl</strong> —— 参数通过栈来传递（从右向左入栈），调用者负责清理栈（谁调用谁清理）</li>
+<li><strong>stdcall</strong> —— 参数通过栈来传递（从右向左入栈），被调用函数负责清理栈（调用的不负责清理）</li>
+<li><strong>fastcall</strong> —— 部分参数通过寄存器传递（前2-4个参数）剩下的从右向左入栈，被调用函数负责清理栈（调用的不负责清理）。通过寄存器传递的目的是提高性能，相当于是stdcall的进化版。</li>
+<li><strong>thiscall</strong> —— this指针通过特定的寄存器传递（x86是ECX）剩下的从右向左入栈，被调用函数负责清理栈（调用的不负责清理）</li>
+</ul>
+<p>后面的 <code>*</code> 是用来修饰后面的定义类型，后面的 <code>_Cvar_Get</code> 是我们定义的新类型名称，加上星号的修饰就表示这是个指针类型。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++">(<span class="hljs-type">const</span> <span class="hljs-type">char</span> *var_name, <span class="hljs-type">const</span> <span class="hljs-type">char</span> *var_value, <span class="hljs-type">int</span> flags) <br></code></pre></td></tr></table></figure>
+
+<p>最后一个括号当中的是函数的参数列表，包含三个参数（两个字符串和一个整数）。</p>
+<p>那么最前面加的 <code>typedef</code> 主要作用是告诉编译器我们在定义一个新的类型名称而不是声明变量。所以整行的意思如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">typedef</span> <span class="hljs-type">cvar_t</span>*(__cdecl * _Cvar_Get)(<span class="hljs-type">const</span> <span class="hljs-type">char</span> *var_name, <span class="hljs-type">const</span> <span class="hljs-type">char</span> *var_value, <span class="hljs-type">int</span> flags);<br></code></pre></td></tr></table></figure>
+
+<p>创建一个名为 <strong>_Cvar_Get</strong> 的新类型，这是个函数指针类型，指向的这个函数使用 <strong>__cdecl</strong> 调用约定并且接受三个参数（两个 const char 和一个 int ），最后返回一个 cvar_t 类型的值。</p>
+<h2 id="2-函数指针的赋值"><a href="#2-函数指针的赋值" class="headerlink" title="2.函数指针的赋值"></a>2.函数指针的赋值</h2><p>我们来看第二行代码，主要操作时函数指针变量的声明和赋值：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++">_Cvar_Get Cvar_Get = (_Cvar_Get)<span class="hljs-number">0x043F688</span>;<br></code></pre></td></tr></table></figure>
+
+<p><code>_Cvar_Get</code> 是我们在前面定义的类型名，后面的 <code>Cvar_Get</code> 是新定义的变量名（ _Cvar_Get 类型的函数指针变量），0x043F688 是个内存地址（游戏内函数的内存地址）， <code>(_Cvar_Get)</code> 是类型转换把内存地址转换为函数指针类型。</p>
+<p>通俗一点来讲在实际用途当中，通过分析IDA中函数的参数类型，返回值和调用约定。再使用 typedef 将这个原型定义为一个函数指针类型，然后声明一个该类型的变量指向IDA或者动态调试找到的函数内存地址。这样就可以像调用普通C++函数一样调用游戏内部函数了。</p>
+<h2 id="3-函数指针的调用"><a href="#3-函数指针的调用" class="headerlink" title="3.函数指针的调用"></a>3.函数指针的调用</h2><p>下面来详细解释第三行代码：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-built_in">Cvar_Get</span>(<span class="hljs-string">&quot;cl_gamepath&quot;</span>, <span class="hljs-string">&quot;OpenArena&quot;</span>, <span class="hljs-number">0</span>);<br></code></pre></td></tr></table></figure>
+
+<p>这行代码是对函数指针的调用，看起来跟普通函数的调用一样，但是实际上这里调用的是指向内存地址 0x043F688 的函数。</p>
+<p>1.执行过程是先找到 Cvar_Get 变量，一看是个函数指针，那就获取该指针指向的内存地址（ 0x043F688 ）。</p>
+<p>2.根据 __cdecl 调用约定，参数从右向左入栈，首先将第三个参数 0 压入栈，然后把第二个参数 OpenArena 的地址压入栈，最后把第三个参数 cl_gamepath 的地址压入栈。</p>
+<p>3.程序跳转到地址为  0x043F688 处执行那里的代码，执行过程中被调用函数可以通过栈来访问传入的三个参数，函数执行完之后函数返回一个 cvar_t* 类型的指针。</p>
+<p>4.因为是 __cdecl 调用约定，所以调用者负责清理栈。</p>
+<h2 id="4-举例说明"><a href="#4-举例说明" class="headerlink" title="4.举例说明"></a>4.举例说明</h2><p>假设我们在IDA中发现了一个我们需要的游戏内部函数，这个函数负责创建爆炸效果：</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">函数地址: <span class="hljs-number">0x00487A2C</span><br>函数名: Game_CreateExplosion<br>传入参数: <span class="hljs-built_in">float</span> x, <span class="hljs-built_in">float</span> y, <span class="hljs-built_in">float</span> z, <span class="hljs-built_in">float</span> radius, <span class="hljs-built_in">int</span> damage<br>返回值: <span class="hljs-built_in">void</span><br>调用约定: __cdecl<br></code></pre></td></tr></table></figure>
+
+<p>根据上面内容，实现方式如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// 1. 定义函数类型</span><br><span class="hljs-function"><span class="hljs-keyword">typedef</span> <span class="hljs-title">void</span><span class="hljs-params">(__cdecl *_Game_CreateExplosion)</span><span class="hljs-params">(<span class="hljs-type">float</span> x, <span class="hljs-type">float</span> y, <span class="hljs-type">float</span> z, <span class="hljs-type">float</span> radius, <span class="hljs-type">int</span> damage)</span></span>;<br><br><span class="hljs-comment">// 2. 创建函数指针实例</span><br>_Game_CreateExplosion Game_CreateExplosion = (_Game_CreateExplosion)<span class="hljs-number">0x00487A2C</span>;<br><br><span class="hljs-comment">// 3. 调用游戏内部函数</span><br><span class="hljs-built_in">Game_CreateExplosion</span>(<span class="hljs-number">100.0f</span>, <span class="hljs-number">200.0f</span>, <span class="hljs-number">50.0f</span>, <span class="hljs-number">30.0f</span>, <span class="hljs-number">100</span>);<br></code></pre></td></tr></table></figure>
+
+<p>因为我们的函数指针定义和游戏内的函数内存布局是完全匹配的，调用约定也必须跟游戏内部的保持一直，所以CPU会调转到游戏代码的正确位置执行原始代码不会导致游戏崩溃。</p>
+<h1 id="二，实际演示"><a href="#二，实际演示" class="headerlink" title="二，实际演示"></a>二，实际演示</h1><h2 id="1-无参函数的调用"><a href="#1-无参函数的调用" class="headerlink" title="1.无参函数的调用"></a>1.无参函数的调用</h2><h3 id="（1）示范程序编译"><a href="#（1）示范程序编译" class="headerlink" title="（1）示范程序编译"></a>（1）示范程序编译</h3><p>为了实现上面的技术，可以自己写一段程序来模拟游戏中的函数。以下一段无参函数调用源码：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;Windows.h&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">printword_A</span><span class="hljs-params">()</span>		<span class="hljs-comment">//第一个无参函数</span></span><br><span class="hljs-function"></span>&#123;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;This is A !!!\n&quot;</span>;			<span class="hljs-comment">//打印字符串</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">printword_B</span><span class="hljs-params">()</span>		<span class="hljs-comment">//第二个无参函数</span></span><br><span class="hljs-function"></span>&#123;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;This is B !!!\n&quot;</span>;			<span class="hljs-comment">//打印字符串</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span><br><span class="hljs-function"></span>&#123;<br>    <span class="hljs-keyword">while</span> (<span class="hljs-literal">true</span>)		<span class="hljs-comment">//无限循环用来获取按键反应</span><br>    &#123;<br>        <span class="hljs-keyword">if</span> (<span class="hljs-built_in">GetAsyncKeyState</span>(VK_F1) &amp; <span class="hljs-number">1</span>)		<span class="hljs-comment">//按F1打印字符串</span><br>        &#123;<br>            <span class="hljs-built_in">printword_A</span>();<br>        &#125;<br>        <span class="hljs-keyword">if</span> (<span class="hljs-built_in">GetAsyncKeyState</span>(VK_F2) &amp; <span class="hljs-number">1</span>)		<span class="hljs-comment">//按F2打印字符串</span><br>        &#123;<br>            <span class="hljs-built_in">printword_B</span>();<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>Visual Studio 在编译时得把优化选项全部关闭，不然编译出来的汇编代码都是彻底优化之后的代码整体调用都会发生变化。在项目设置中进行关闭：</p>
+<img src="\image\post_image\post7\S1.png" alt="S1" style="zoom: 50%;" />
+
+<h3 id="（2）调试反汇编"><a href="#（2）调试反汇编" class="headerlink" title="（2）调试反汇编"></a>（2）调试反汇编</h3><p>编译之后的程序通过x32dbg进行调试，以下是main函数部分的反汇编代码：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs assembly">push ebp<br>mov ebp,esp<br>mov eax,1<br>test eax,eax<br>je hooktestproject1.F1107A<br>push 70<br>call dword ptr ds:[&lt;GetAsyncKeyState&gt;]<br>movsx ecx,ax<br>and ecx,1<br>je hooktestproject1.F11062<br>call &lt;hooktestproject1.?printword_A@@YAXXZ&gt;<br>nop <br>push 71<br>call dword ptr ds:[&lt;GetAsyncKeyState&gt;]<br>movsx edx,ax<br>and edx,1<br>je hooktestproject1.F11078<br>call &lt;hooktestproject1.?printword_B@@YAXXZ&gt;<br>nop <br>jmp hooktestproject1.F11043<br>pop ebp<br>ret <br></code></pre></td></tr></table></figure>
+
+<p>可以看到调用两个 <strong>printword</strong> 函数call之前是没有进行任何传参操作，就可以断定此函数是无参函数。下一部判断返回类型，在call指令出下断点然后按快捷键触发断点，进入函数内部，以下是函数内部实现：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs assembly">push ebp			;通过栈保存ebp<br>mov ebp,esp<br>push hooktestproject1.F13140<br>mov eax,dword ptr ds:[&lt;?cout@std@@3V?$basic_ostream@DU?$char_traits@D@std@@@1@A&gt;]<br>push eax			;传字符串并调用printf函数<br>call &lt;hooktestproject1.??$?6U?$char_traits@D@std@@@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@0@AAV10@PBD@Z&gt;<br>add esp,8			;栈平衡<br>pop ebp				;恢复ebp<br>ret <br></code></pre></td></tr></table></figure>
+
+<p>调用完 printf 函数之后进行了栈平衡操作，这里的栈平衡是针对 printf 函数的两个参数，并没有看到任何返回值。在调用者部分能看到调用 <strong>printword</strong> 函数后有个 nop 操作，这是由于没有任何参数通过栈来传递也就是没有必要清理栈就用了 nop 来代替。通过上述分析就可以确定这是一个调用约定为 <strong>cdecl</strong> 的无返回值的函数。</p>
+<h3 id="（3）Hook程序"><a href="#（3）Hook程序" class="headerlink" title="（3）Hook程序"></a>（3）Hook程序</h3><p>已经确定了我们需要调用函数的返回类型，调用约定，参数情况。可以通过 DLL hook 程序的方式来调用这个函数。下面需要找到的是函数地址值，x32dbg 下双击进入对应的call指令后，点击函数第一行后在下方会显示函数的偏移地址：</p>
+<img src="\image\post_image\post7\S2.png" alt="S2" style="zoom: 80%;" />
+
+<p><strong>注意：这里要获取的不是call指令处的地址而是函数地址（call之后的函数首行地址）</strong></p>
+<p>因为函数的地址不是静态地址，所以调用时需要先获取模块地址再加上偏移地址就能定位函数地址，下面是实现方法：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// 定义函数指针类型，用于调用目标程序中的函数</span><br><span class="hljs-function"><span class="hljs-keyword">typedef</span> <span class="hljs-title">void</span><span class="hljs-params">(__cdecl* _PrintA)</span><span class="hljs-params">()</span></span>; <span class="hljs-comment">// PrintA函数的函数指针类型定义</span><br><span class="hljs-function"><span class="hljs-keyword">typedef</span> <span class="hljs-title">void</span><span class="hljs-params">(__cdecl* _PrintB)</span><span class="hljs-params">()</span></span>; <span class="hljs-comment">// PrintB函数的函数指针类型定义</span><br><br><span class="hljs-comment">// 获取当前进程的基地址</span><br><span class="hljs-type">uintptr_t</span> modbase = (<span class="hljs-type">uintptr_t</span>)<span class="hljs-built_in">GetModuleHandleA</span>(<span class="hljs-literal">NULL</span>);<br><br><span class="hljs-comment">// 通过基地址加偏移量定位目标函数</span><br>_PrintA PrintA = (_PrintA)(modbase + <span class="hljs-number">0x105C</span>); <span class="hljs-comment">// 初始化PrintA函数指针，指向基地址+0x105C的位置</span><br>_PrintB PrintB = (_PrintB)(modbase + <span class="hljs-number">0x1072</span>); <span class="hljs-comment">// 初始化PrintB函数指针，指向基地址+0x1072的位置</span><br><br><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * 注入线程的主函数</span><br><span class="hljs-comment"> * @param hModule 当前DLL模块句柄</span><br><span class="hljs-comment"> * @return 线程退出码</span><br><span class="hljs-comment"> */</span><br><span class="hljs-function">DWORD WINAPI <span class="hljs-title">HackThread</span><span class="hljs-params">(HMODULE hModule)</span></span><br><span class="hljs-function"></span>&#123;<br>    <span class="hljs-comment">// 无限循环监听按键</span><br>    <span class="hljs-keyword">while</span> (<span class="hljs-literal">true</span>)<br>    &#123;<br>        <span class="hljs-keyword">if</span> (<span class="hljs-built_in">GetAsyncKeyState</span>(VK_NUMPAD7) &amp; <span class="hljs-number">1</span>) <span class="hljs-comment">// 检测小键盘7是否被按下(按下一次)</span><br>        &#123;<br>            <span class="hljs-built_in">PrintA</span>(); <span class="hljs-comment">// 调用目标程序中的PrintA函数</span><br>        &#125;<br>        <span class="hljs-keyword">if</span> (<span class="hljs-built_in">GetAsyncKeyState</span>(VK_NUMPAD8) &amp; <span class="hljs-number">1</span>) <span class="hljs-comment">// 检测小键盘8是否被按下(按下一次)</span><br>        &#123;<br>            <span class="hljs-built_in">PrintB</span>(); <span class="hljs-comment">// 调用目标程序中的PrintB函数</span><br>        &#125;<br>        <span class="hljs-keyword">if</span> (<span class="hljs-built_in">GetAsyncKeyState</span>(VK_END) &amp; <span class="hljs-number">1</span>) <span class="hljs-comment">// 检测End键是否被按下(按下一次)</span><br>        &#123;<br>            <span class="hljs-keyword">break</span>; <span class="hljs-comment">// 结束循环，准备退出线程</span><br>        &#125;<br>    &#125;<br>    <br>    <span class="hljs-comment">// 释放DLL并退出线程</span><br>    <span class="hljs-built_in">FreeLibraryAndExitThread</span>(hModule, <span class="hljs-number">0</span>);<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>; <span class="hljs-comment">// 返回退出码(此行代码实际上不会执行，因为FreeLibraryAndExitThread会直接终止线程)</span><br>&#125;<br><br><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * DLL入口点函数</span><br><span class="hljs-comment"> * @param hModule DLL模块句柄</span><br><span class="hljs-comment"> * @param ul_reason_for_call 调用原因</span><br><span class="hljs-comment"> * @param lpReserved 保留参数</span><br><span class="hljs-comment"> * @return 是否成功</span><br><span class="hljs-comment"> */</span><br><span class="hljs-function">BOOL APIENTRY <span class="hljs-title">DllMain</span><span class="hljs-params">(HMODULE hModule,</span></span><br><span class="hljs-params"><span class="hljs-function">    DWORD  ul_reason_for_call,</span></span><br><span class="hljs-params"><span class="hljs-function">    LPVOID lpReserved</span></span><br><span class="hljs-params"><span class="hljs-function">)</span></span><br><span class="hljs-function"></span>&#123;<br>    <span class="hljs-keyword">switch</span> (ul_reason_for_call)<br>    &#123;<br>    <span class="hljs-keyword">case</span> DLL_PROCESS_ATTACH: <span class="hljs-comment">// 当DLL被加载到进程时</span><br>        <span class="hljs-comment">// 创建一个新线程执行HackThread函数，避免在DllMain中执行过多操作</span><br>        <span class="hljs-built_in">CreateThread</span>(<span class="hljs-literal">nullptr</span>, <span class="hljs-number">0</span>, (LPTHREAD_START_ROUTINE)HackThread, hModule, <span class="hljs-number">0</span>, <span class="hljs-literal">nullptr</span>);<br>        <span class="hljs-keyword">break</span>;<br>    <span class="hljs-keyword">default</span>:<br>        <span class="hljs-keyword">break</span>;<br>    &#125;<br>    <span class="hljs-keyword">return</span> TRUE; <span class="hljs-comment">// 返回成功</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="2-有参函数的调用"><a href="#2-有参函数的调用" class="headerlink" title="2.有参函数的调用"></a>2.有参函数的调用</h2><h3 id="（1）示范程序修改"><a href="#（1）示范程序修改" class="headerlink" title="（1）示范程序修改"></a>（1）示范程序修改</h3><p>把第二个函数改成带参的并且打印输出特定的字符串：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">printword_B</span><span class="hljs-params">(<span class="hljs-type">const</span> <span class="hljs-type">char</span>* word)</span>		<span class="hljs-comment">//第二个带参函数</span></span><br><span class="hljs-function"></span>&#123;<br>	std::cout &lt;&lt; word &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;			<span class="hljs-comment">//打印输入字符串</span><br>&#125;<br><br><span class="hljs-built_in">printword_B</span>(<span class="hljs-string">&quot;Hello World&quot;</span>);		<span class="hljs-comment">//调用</span><br><br></code></pre></td></tr></table></figure>
+
+<h3 id="（2）调试反汇编-1"><a href="#（2）调试反汇编-1" class="headerlink" title="（2）调试反汇编"></a>（2）调试反汇编</h3><p>x32dbg 跳转到 main 函数查看第二个函数的汇编代码：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs assembly">push 62<br>call dword ptr ds:[&lt;GetAsyncKeyState&gt;]<br>movsx edx,ax<br>and edx,1<br>je hooktestproject_1.2C108F<br>push hooktestproject_1.2C315C		;通过栈传参<br>call &lt;hooktestproject_1.void __cdecl printword_B(char const *)&gt;			;第二个函数的调用<br>add esp,4			;调用者平衡栈<br>jmp hooktestproject_1.2C1053<br>pop ebp<br>ret <br></code></pre></td></tr></table></figure>
+
+<p>汇编代码可以知道 函数B 通过栈传递了一个参数，查看此参数的地址值发现是一个以0结尾的字符串：</p>
+<img src="\image\post_image\post7\S3.png" alt="S3" style="zoom:80%;" />
+
+<p>调用完 函数B 之后调用者平衡了栈，查看函数B内部也看不到任何返回值。因此这个函数的调用约定为 cdecl ，有一个字符串参数并无返回值。</p>
+<h3 id="（3）Hook程序-1"><a href="#（3）Hook程序-1" class="headerlink" title="（3）Hook程序"></a>（3）Hook程序</h3><p>修改一下我们的Hook程序把 函数B 改成带参的类型，把原有的字符串改成自己想要的字符串：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-keyword">typedef</span> <span class="hljs-title">void</span><span class="hljs-params">(__cdecl* _PrintA)</span><span class="hljs-params">()</span></span>; <span class="hljs-comment">// 定义无参数函数指针类型，用于调用printword_A函数</span><br><span class="hljs-function"><span class="hljs-keyword">typedef</span> <span class="hljs-title">void</span><span class="hljs-params">(__cdecl* _PrintB)</span><span class="hljs-params">(<span class="hljs-type">const</span> <span class="hljs-type">char</span> * changeWord)</span></span>; <span class="hljs-comment">// 定义带字符串参数的函数指针类型，用于调用printword_B函数</span><br><br><span class="hljs-type">uintptr_t</span> modbase = (<span class="hljs-type">uintptr_t</span>)<span class="hljs-built_in">GetModuleHandleA</span>(<span class="hljs-literal">NULL</span>); <span class="hljs-comment">// 获取当前进程的基地址</span><br><br><span class="hljs-comment">// 通过基地址加偏移量获取目标函数的实际地址</span><br>_PrintA PrintA = (_PrintA)(modbase + <span class="hljs-number">0x1000</span>); <span class="hljs-comment">// 初始化PrintA函数指针，指向printword_A函数</span><br>_PrintB PrintB = (_PrintB)(modbase + <span class="hljs-number">0x1020</span>); <span class="hljs-comment">// 初始化PrintB函数指针，指向printword_B函数</span><br><br><span class="hljs-comment">// 注入线程的主函数</span><br><br><span class="hljs-function">DWORD WINAPI <span class="hljs-title">HackThread</span><span class="hljs-params">(HMODULE hModule)</span></span><br><span class="hljs-function"></span>&#123;<br>    <span class="hljs-comment">// 无限循环监听按键</span><br>    <span class="hljs-keyword">while</span> (<span class="hljs-literal">true</span>)<br>    &#123;<br>        <span class="hljs-keyword">if</span> (<span class="hljs-built_in">GetAsyncKeyState</span>(VK_NUMPAD7) &amp; <span class="hljs-number">1</span>) <span class="hljs-comment">// 检测小键盘7是否被按下(按下一次)</span><br>        &#123;<br>            <span class="hljs-built_in">PrintA</span>(); <span class="hljs-comment">// 调用目标程序中的printword_A函数</span><br>        &#125;<br>        <span class="hljs-keyword">if</span> (<span class="hljs-built_in">GetAsyncKeyState</span>(VK_NUMPAD8) &amp; <span class="hljs-number">1</span>) <span class="hljs-comment">// 检测小键盘8是否被按下(按下一次)</span><br>        &#123;<br>            <span class="hljs-comment">// 直接传递字符串字面量，这可能会导致问题，因为字符串存储在DLL内存空间</span><br>            <span class="hljs-comment">// 更安全的做法是在目标进程空间分配内存并复制字符串</span><br>            <span class="hljs-built_in">PrintB</span>(<span class="hljs-string">&quot;Hack Success !&quot;</span>); <span class="hljs-comment">// 调用目标程序中的printword_B函数并传入自定义字符串</span><br>        &#125;<br>        <span class="hljs-keyword">if</span> (<span class="hljs-built_in">GetAsyncKeyState</span>(VK_END) &amp; <span class="hljs-number">1</span>) <span class="hljs-comment">// 检测End键是否被按下(按下一次)</span><br>        &#123;<br>            <span class="hljs-keyword">break</span>; <span class="hljs-comment">// 结束循环，准备退出线程</span><br>        &#125;<br>    &#125;<br>    <br>    <span class="hljs-comment">// 释放DLL并退出线程</span><br>    <span class="hljs-built_in">FreeLibraryAndExitThread</span>(hModule, <span class="hljs-number">0</span>);<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>; <span class="hljs-comment">// 返回退出码(此行代码实际上不会执行，因为FreeLibraryAndExitThread会直接终止线程)</span><br><br></code></pre></td></tr></table></figure>
+
+<p>展示效果图：</p>
+<img src="\image\post_image\post7\S4.png" alt="S4" style="zoom:67%;" />
+
+<h2 id="3-thiscall函数的调用"><a href="#3-thiscall函数的调用" class="headerlink" title="3.thiscall函数的调用"></a>3.thiscall函数的调用</h2><h3 id="（1）示范程序修改-1"><a href="#（1）示范程序修改-1" class="headerlink" title="（1）示范程序修改"></a>（1）示范程序修改</h3><p>为了调用thiscall创建一个玩家类，里面写一个减生命值函数。创建实例，把实例地址传递给一个变量再通过此变量来调用成员函数和传递参数：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;Windows.h&gt;</span></span><br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">player</span><br>&#123;<br><span class="hljs-keyword">public</span>:<br>	<span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">subHealthFunc</span><span class="hljs-params">(<span class="hljs-type">int</span> damage)</span></span><br><span class="hljs-function">	</span>&#123;<br>		health -= damage;<br>		std::cout &lt;&lt; <span class="hljs-string">&quot;damage is : &quot;</span> &lt;&lt; damage &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>	&#125;<br><br>	<span class="hljs-type">int</span> health;<br>&#125;;<br><br>player* l_player;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span><br><span class="hljs-function"></span>&#123;<br>	player player_sam;<br>	l_player = &amp;player_sam;<br><br>	l_player-&gt;health = <span class="hljs-number">1000</span>;<br><br>	<span class="hljs-keyword">while</span> (<span class="hljs-literal">true</span>)		<span class="hljs-comment">//无限循环用来获取按键反应</span><br>	&#123;<br>		<span class="hljs-keyword">if</span> (<span class="hljs-built_in">GetAsyncKeyState</span>(VK_NUMPAD1) &amp; <span class="hljs-number">1</span>)		<span class="hljs-comment">//按F1打印字符串</span><br>		&#123;<br>			std::cout &lt;&lt; <span class="hljs-string">&quot;health is : &quot;</span> &lt;&lt; l_player-&gt;health &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>		&#125;<br>		<span class="hljs-keyword">if</span> (<span class="hljs-built_in">GetAsyncKeyState</span>(VK_NUMPAD2) &amp; <span class="hljs-number">1</span>)		<span class="hljs-comment">//按F2打印字符串</span><br>		&#123;<br>			l_player-&gt;<span class="hljs-built_in">subHealthFunc</span>(<span class="hljs-number">10</span>);<br>			std::cout &lt;&lt; <span class="hljs-string">&quot;new health is : &quot;</span> &lt;&lt; l_player-&gt;health &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>		&#125;<br>	&#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="（2）调式反汇编"><a href="#（2）调式反汇编" class="headerlink" title="（2）调式反汇编"></a>（2）调式反汇编</h3><p>x32dbg 跳转到 main 函数查看成员函数调用部分的汇编代码：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs assembly">push 62<br>call dword ptr ds:[&lt;GetAsyncKeyState&gt;]<br>movsx edx,ax<br>and edx,1<br>je hooktestproject_1.1C1125<br>push A			;第二个参数（damage）<br>mov ecx,dword ptr ds:[&lt;class player *l_player&gt;]		;第一个参数this指针<br>call &lt;hooktestproject_1.public: void __thiscall player::subHealthFunc(int)&gt;<br></code></pre></td></tr></table></figure>
+
+<p>在实际情况下大部分通过ecx传递第一个参数的大概率为thiscall调用约定，还可以发现此函数有两个参数，函数内部也没有返回值。</p>
+<h3 id="（3）Hook程序-2"><a href="#（3）Hook程序-2" class="headerlink" title="（3）Hook程序"></a>（3）Hook程序</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// 定义一个玩家结构体，用于管理玩家相关的功能和数据</span><br><span class="hljs-keyword">struct</span> <span class="hljs-title class_">_player</span><br>&#123;<br>    <span class="hljs-comment">// 定义一个函数指针类型，表示造成大量伤害的成员函数</span><br>    <span class="hljs-comment">// __thiscall 表示这是一个C++类成员函数的调用约定</span><br>    <span class="hljs-comment">// 参数1: this指针，指向对象实例</span><br>    <span class="hljs-comment">// 参数2: 伤害值</span><br>    <span class="hljs-function"><span class="hljs-keyword">typedef</span> <span class="hljs-title">void</span><span class="hljs-params">(__thiscall* _bigDamage)</span><span class="hljs-params">(<span class="hljs-type">void</span>* ptr_this, <span class="hljs-type">int</span> damage)</span></span>;<br>    <br>    <span class="hljs-comment">// 声明一个函数指针，将用于存储目标函数的地址</span><br>    _bigDamage bigdamage;<br><br>    <span class="hljs-comment">// 存储伤害值的变量</span><br>    <span class="hljs-type">int</span> damage;<br>    <br>    <span class="hljs-comment">// 从内存地址0x1c53c8获取this指针</span><br>    <span class="hljs-comment">// 这个地址可能存储了游戏中玩家对象的指针</span><br>    <span class="hljs-type">void</span>* ptr_this = *(<span class="hljs-type">void</span>**)<span class="hljs-number">0x1c53c8</span>;<br>&#125; player; <span class="hljs-comment">// 创建一个全局player实例</span><br><br><br><span class="hljs-comment">// 获取当前进程的基址，用于计算函数的实际地址</span><br><span class="hljs-type">uintptr_t</span> modbase = (<span class="hljs-type">uintptr_t</span>)<span class="hljs-built_in">GetModuleHandleA</span>(<span class="hljs-literal">NULL</span>);<br><br><br><span class="hljs-comment">// DLL注入后的主线程函数</span><br><span class="hljs-function">DWORD WINAPI <span class="hljs-title">HackThread</span><span class="hljs-params">(HMODULE hModule)</span></span><br><span class="hljs-function"></span>&#123;<br>    <span class="hljs-comment">// 初始化bigdamage函数指针</span><br>    <span class="hljs-comment">// 通过基址加偏移量0x1000计算出目标函数的实际地址</span><br>    player.bigdamage = (_player::_bigDamage)(modbase + <span class="hljs-number">0x1000</span>);<br>    <br>    <span class="hljs-comment">// 主循环，持续检测按键输入</span><br>    <span class="hljs-keyword">while</span> (<span class="hljs-literal">true</span>)<br>    &#123;<br>        <span class="hljs-comment">// 检测是否按下小键盘7键</span><br>        <span class="hljs-keyword">if</span> (<span class="hljs-built_in">GetAsyncKeyState</span>(VK_NUMPAD7) &amp; <span class="hljs-number">1</span>)<br>        &#123;<br>            <span class="hljs-comment">// 调用bigdamage函数，传入this指针和伤害值100</span><br>            <span class="hljs-comment">// 这将对游戏中的玩家造成100点伤害</span><br>            player.<span class="hljs-built_in">bigdamage</span>(player.ptr_this, <span class="hljs-number">100</span>);<br>        &#125;<br>        <br>        <span class="hljs-comment">// 检测是否按下End键，如果按下则退出循环</span><br>        <span class="hljs-keyword">if</span> (<span class="hljs-built_in">GetAsyncKeyState</span>(VK_END) &amp; <span class="hljs-number">1</span>)<br>        &#123;<br>            <span class="hljs-keyword">break</span>;<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-comment">// 释放DLL并退出线程</span><br>    <span class="hljs-built_in">FreeLibraryAndExitThread</span>(hModule, <span class="hljs-number">0</span>);<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>展示效果图：</p>
+<img src="\image\post_image\post7\S5.png" alt="S5" style="zoom: 80%;" />
+
+<hr>
+<p>好了现在你已经掌握了此技术，可以随意调用自己所需要的程序函数了。这种技术最主要的还是以分析为主，找出函数的调用约定，参数，返回值就能任意调用了。文章当中有需要更改的部分请在评论区指出或者联系我个人邮箱进行反馈，谢谢观看！</p>
+
+        </div>
+        
+        <!-- 文章导航 -->
+        <nav class="post-nav">
+          
+            <a class="prev" href="/2025/04/07/post8/">
+              <i class="fas fa-chevron-left"></i>
+              函数Hook技术（Detour 转向）
+            </a>
+          
+          
+            <a class="next" href="/2025/03/16/post6/">
+              射线检测函数的分析
+              <i class="fas fa-chevron-right"></i>
+            </a>
+          
+        </nav>
+      </article>
+    </div>
+  </div>
+</div>
+
+    </div>
+    <footer class="footer">
+  <div class="status-bar">
+    <div class="status-item">
+      <i class="fas fa-code-branch"></i>
+      master
+    </div>
+    <div class="status-item">
+      <i class="fas fa-sync"></i>
+      bahadir
+    </div>
+    <div class="status-item">
+      <i class="fas fa-clock"></i>
+      2025-08-21
+    </div>
+    <div class="status-item">
+      Designed By&nbsp; <a href="https://github.com/47bahadir" target="_blank"> bahadir</a>
+    </div>
+    <div class="status-item github">
+      <a href="https://github.com/47bahadir" target="_blank">
+        <i class="fab fa-github"></i>
+      </a>
+    </div>
+    <div class="status-item" id="site-runtime" style="margin-left: auto;">
+      <i class="fas fa-heartbeat"></i>
+      <span id="runtime-text">Site running for...</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+// 网站运行时间计算器
+function updateSiteRuntime() {
+  // 设置网站启动时间 (请根据实际情况修改这个日期)
+  const startDate = new Date('2025-02-22 00:00:00'); // 修改为你的网站启动日期
+  const now = new Date();
+  const timeDiff = now - startDate;
+
+  // 计算天数、小时、分钟、秒数
+  const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+
+  // 更新显示文本
+  const runtimeText = `Site running for ${days} days ${hours} hours ${minutes} minutes ${seconds} seconds`;
+  const runtimeElement = document.getElementById('runtime-text');
+  if (runtimeElement) {
+    runtimeElement.textContent = runtimeText;
+  }
+}
+
+// 页面加载完成后开始计时
+document.addEventListener('DOMContentLoaded', function() {
+  updateSiteRuntime(); // 立即更新一次
+  setInterval(updateSiteRuntime, 1000); // 每秒更新一次
+});
+</script>
+
+    
+    <!-- 全局配置 -->
+    <script>
+      window.HEXO_CONFIG = {
+        language: "zh-CN",
+        root: "/"
+      };
+      
+      // 特定于搜索的配置
+      window.VSC4T_SEARCH = {
+        root: "/"
+      };
+    </script>
+    
+    <script src="//cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/highlight.js@11.7.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+    <!-- 这里可以放置自定义脚本 -->
+<script>
+document.addEventListener('DOMContentLoaded', (event) => {
+  // Apply smooth scroll to non-TOC anchor links
+  document.querySelectorAll('a[href^="#"]:not(.toc-link)').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+      e.preventDefault();
+      // Check if querySelector is valid before using it
+      try {
+        const targetSelector = this.getAttribute('href');
+        // Basic check for potentially invalid selectors (though not exhaustive)
+        if (targetSelector && targetSelector.length > 1) { 
+          const targetElement = document.querySelector(targetSelector);
+          if (targetElement) {
+            targetElement.scrollIntoView({
+              behavior: 'smooth'
+            });
+          } else {
+            console.warn('Smooth scroll target not found:', targetSelector);
+          }
+        } else {
+           console.warn('Invalid href for smooth scroll:', targetSelector);
+        }
+      } catch (error) {
+        console.error('Error during smooth scroll:', error, 'Selector:', this.getAttribute('href'));
+        // Fallback or alternative behavior if needed
+        // For example, try getElementById if it's just an ID
+        const targetId = this.getAttribute('href').slice(1);
+        try {
+            const targetElementById = document.getElementById(decodeURIComponent(targetId));
+            if (targetElementById) {
+                targetElementById.scrollIntoView({ behavior: 'smooth' });
+            }
+        } catch (idError) {
+             console.error('Fallback getElementById also failed:', idError);
+        }
+      }
+    });
+  });
+});
+</script>
+<script src="/js/toc.js"></script>
+
+<!-- Scripts -->
+<script>
+  // 将语言文件中的翻译传递给前端
+  window.HEXO_CONFIG = {
+    language: "zh-CN",
+    search_placeholder: "输入关键词搜索...",
+    search_no_results: "未找到相关结果",
+    search_result: "نتيجة",
+    search_results: "搜索结果",
+    search_results_found: "找到 undefined 个结果",
+    search_in: "搜索范围",
+    search_in_title: "标题",
+    search_in_content: "内容",
+    search_in_tags: "标签",
+    search_in_categories: "分类",
+    search_filters: "搜索过滤器",
+    search_recent: "最近搜索",
+    search_clear: "清除",
+    search_loading: "加载中...",
+    search_error: "加载搜索数据时出错"
+  };
+</script>
+
+
+
+<!-- 添加所有需要的脚本 -->
+<script src="/js/main.js"></script>
+<script src="/js/search.js"></script>
+
+
+    <script>
+      // 移动端菜单切换
+      $(document).ready(function() {
+        $('.mobile-menu-toggle').click(function() {
+          $('.sidebar-explorer').toggleClass('show');
+        });
+      });
+    </script>
+  </body>
+</html>
