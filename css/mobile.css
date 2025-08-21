@@ -30,11 +30,30 @@
     }
 
     .vs-nav {
-        padding-left: 20px; /* 桌面端正常padding */
+        padding: 0 20px; /* 桌面端正常padding */
+        display: flex;
+        align-items: center;
+        justify-content: space-between; /* 桌面端左右分布 */
+        height: 48px;
+    }
+
+    .nav-left {
+        display: flex;
+        align-items: center;
+        width: auto; /* 桌面端自动宽度 */
+    }
+
+    .nav-brand {
+        font-size: 1.2em;
+        padding: 0 15px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
 
     .nav-right {
         display: flex; /* 桌面端显示导航菜单 */
+        gap: 5px;
     }
 }
 
