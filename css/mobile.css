@@ -46,12 +46,27 @@
 
     /* 调整移动端header布局 */
     .vs-nav {
-        padding-left: 60px; /* 为菜单按钮留出空间 */
+        padding: 0 60px 0 20px; /* 左侧留给菜单按钮，右侧平衡 */
+        display: flex;
+        align-items: center;
+        justify-content: center; /* 标题居中 */
+        height: 48px;
+    }
+
+    .nav-left {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
     }
 
     .nav-brand {
         font-size: 1.1em;
-        padding: 0 10px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
     }
 
     .nav-right {
