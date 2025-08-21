@@ -1,18 +1,61 @@
 .mobile-menu-toggle {
-    display: none;
+    display: none; /* 默认隐藏 */
     position: fixed;
-    top: 10px;
-    left: 10px;
-    z-index: 1000;
-    padding: 10px;
-    background: #1e1e1e;
+    top: 12px;
+    left: 15px;
+    z-index: 1001;
+    padding: 8px;
+    background: rgba(30, 30, 30, 0.9);
+    border: 1px solid #404040;
     border-radius: 4px;
     cursor: pointer;
+    color: #d4d4d4;
+    font-size: 16px;
+    width: 36px;
+    height: 36px;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.mobile-menu-toggle:hover {
+    background: rgba(45, 45, 45, 0.9);
+    color: #569cd6;
+}
+
+/* 桌面端确保菜单按钮隐藏，header布局正常 */
+@media screen and (min-width: 769px) {
+    .mobile-menu-toggle {
+        display: none !important;
+    }
+
+    .vs-nav {
+        padding-left: 20px; /* 桌面端正常padding */
+    }
+
+    .nav-right {
+        display: flex; /* 桌面端显示导航菜单 */
+    }
 }
 
 @media screen and (max-width: 768px) {
+    /* 只在移动端显示菜单按钮 */
     .mobile-menu-toggle {
-        display: block;
+        display: flex !important;
+    }
+
+    /* 调整移动端header布局 */
+    .vs-nav {
+        padding-left: 60px; /* 为菜单按钮留出空间 */
+    }
+
+    .nav-brand {
+        font-size: 1.1em;
+        padding: 0 10px;
+    }
+
+    .nav-right {
+        display: none; /* 在移动端隐藏导航菜单 */
     }
 
     .sidebar-explorer {
