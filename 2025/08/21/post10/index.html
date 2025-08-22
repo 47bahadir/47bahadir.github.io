@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>AI工作原理详解 | BHD Tec</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="/image/logo/bit.ico">
+  <link rel="shortcut icon" type="image/x-icon" href="/image/logo/bit.ico">
+
+  <!-- MathJax Support -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true,
+        processEnvironments: true
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+      }
+    };
+  </script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+  <!-- 添加代码高亮样式 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
+  <!-- 添加highlight.js库 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+  <!-- 添加mermaid.js库 -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <link rel="stylesheet" href="/css/code.css">
+  <link rel="stylesheet" href="/css/code-custom.css">
+  <link rel="stylesheet" href="/css/code-languages.css">
+  <link rel="stylesheet" href="/css/mermaid.css">
+
+  <link rel="stylesheet" href="/css/vscode.css">
+  <link rel="stylesheet" href="/css/post.css">
+  <link rel="stylesheet" href="/css/tag.css">
+  <link rel="stylesheet" href="/css/categories.css">
+  <link rel="stylesheet" href="/css/archive.css">
+  <link rel="stylesheet" href="/css/search.css">
+  <link rel="stylesheet" href="/css/math.css">
+  <link rel="stylesheet" href="/css/mobile.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+  <link rel="stylesheet" href="/css/elements.css">
+  <link rel="stylesheet" href="/css/statistics.css">
+
+  <!-- 添加 JetBrains Mono 字体 -->  
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- Add any custom head content here -->
+
+  <script src="/js/explorer.js"></script>
+  <script src="/js/code-copy.js"></script>
+  <script src="/js/code-enhance.js"></script>
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div class="wrapper">
+      <div class="mobile-menu-toggle">
+        <i class="fas fa-bars"></i>
+      </div>
+      <header class="vs-header">
+  <nav class="vs-nav">
+    <div class="nav-left">
+      <a href="/" class="nav-brand">
+        <i class="fas fa-terminal"></i>
+        BHD Tec
+      </a>
+    </div>
+    
+    <div class="nav-right">
+      <a href="/" class="nav-item ">
+        <i class="fas fa-home"></i>
+        <span>首页</span>
+      </a>
+      <a href="/archives/" class="nav-item ">
+        <i class="fas fa-archive"></i>
+        <span>归档</span>
+      </a>
+      <a href="/categories/" class="nav-item ">
+        <i class="fas fa-folder"></i>
+        <span>分类</span>
+      </a>
+      <a href="/tags/" class="nav-item ">
+        <i class="fas fa-tags"></i>
+        <span>标签</span>
+      </a>
+      <a href="/search/" class="nav-item ">
+        <i class="fas fa-search"></i>
+        <span>搜索</span>
+      </a>
+      <a href="/about/" class="nav-item ">
+        <i class="fas fa-info-circle"></i>
+        <span>关于</span>
+      </a>
+    </div>
+  </nav>
+</header>
+
+<script>
+  function smoothScroll(event, target) {
+    event.preventDefault();
+    const targetId = target.substring(target.indexOf('#') + 1);
+    const targetElement = document.getElementById(targetId);
+
+    if (targetElement) {
+      window.scrollTo({
+        top: targetElement.offsetTop - 50, // 调整偏移量
+        behavior: 'smooth'
+      });
+    } else {
+      window.location.href = target;
+    }
+  }
+
+  window.addEventListener('scroll', function() {
+    const header = document.querySelector('.vs-header');
+    const nav = document.querySelector('.vs-nav');
+    const scrollPercent = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+    
+    nav.style.setProperty('--scroll-percent', `${scrollPercent}%`);
+    
+    if (window.scrollY > 0) {
+      header.classList.add('scrolled');
+    } else {
+      header.classList.remove('scrolled');
+    }
+  });
+
+  // 添加标签页切换动画
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', function(e) {
+      const ripple = document.createElement('span');
+      ripple.classList.add('nav-ripple');
+      this.appendChild(ripple);
+      
+      const rect = this.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      ripple.style.left = `${x}px`;
+      ripple.style.top = `${y}px`;
+      
+      setTimeout(() => ripple.remove(), 1000);
+    });
+  });
+</script>
+
+
+<div class="vscode-container">
+  <!-- 左侧资源管理器 -->
+  <div class="sidebar-explorer">
+    <!-- TOC导航 -->
+    <div class="explorer-section">
+      <div class="section-header">
+        <i class="fas fa-list"></i>
+        <span>TABLE OF CONTENTS</span>
+      </div>
+      <div class="section-content">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%80%EF%BC%8CAI%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86"><span class="toc-text">一，AI工作原理</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%EF%BC%8C%E6%9D%83%E9%87%8D"><span class="toc-text">二，权重</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%89%EF%BC%8C%E6%BF%80%E6%B4%BB%E5%87%BD%E6%95%B0"><span class="toc-text">三，激活函数</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%9B%9B%EF%BC%8C%E7%A5%9E%E7%BB%8F%E5%85%83%E5%92%8C%E7%A5%9E%E7%BB%8F%E7%BD%91"><span class="toc-text">四，神经元和神经网</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%94%EF%BC%8C%E8%BE%93%E5%85%A5%E5%B1%82-%E8%BE%93%E5%87%BA%E5%B1%82-%E9%9A%90%E8%97%8F%E5%B1%82"><span class="toc-text">五，输入层,输出层,隐藏层</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%AD%EF%BC%8C%E6%8D%9F%E5%A4%B1%E5%87%BD%E6%95%B0"><span class="toc-text">六，损失函数</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%83%EF%BC%8C%E6%AD%A3%E5%90%91%E4%BC%A0%E6%92%AD%E5%92%8C%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD"><span class="toc-text">七，正向传播和反向传播</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%AB%EF%BC%8C%E6%A2%AF%E5%BA%A6"><span class="toc-text">八，梯度</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E6%A2%AF%E5%BA%A6%E7%9A%84%E6%A6%82%E5%BF%B5"><span class="toc-text">1.梯度的概念</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E6%A2%AF%E5%BA%A6%E4%B8%8B%E9%99%8D"><span class="toc-text">2.梯度下降</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E6%A2%AF%E5%BA%A6%E7%88%86%E7%82%B8"><span class="toc-text">3.梯度爆炸</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B9%9D%EF%BC%8C%E5%AD%A6%E4%B9%A0%E7%8E%87"><span class="toc-text">九，学习率</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E6%A6%82%E5%BF%B5%E4%BB%8B%E7%BB%8D"><span class="toc-text">1.概念介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E4%B8%BE%E4%BE%8B%E8%AF%B4%E6%98%8E"><span class="toc-text">2.举例说明</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E6%AD%A3%E5%90%91%E4%BC%A0%E6%92%AD-%E6%A8%A1%E5%9E%8B%E7%94%A8%E5%BD%93%E5%89%8D%E7%9A%84%E6%9D%83%E9%87%8D%E8%BF%9B%E8%A1%8C%E9%A2%84%E6%B5%8B"><span class="toc-text">(1)正向传播 : 模型用当前的权重进行预测</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E8%AE%A1%E7%AE%97%E6%8D%9F%E5%A4%B1"><span class="toc-text">(2)计算损失</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD"><span class="toc-text">(3)反向传播</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E4%BD%BF%E7%94%A8%E5%AD%A6%E4%B9%A0%E7%8E%87%E6%9D%A5%E6%9B%B4%E6%96%B0%E6%9D%83%E9%87%8D"><span class="toc-text">(4)使用学习率来更新权重</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8D%81%EF%BC%8C%E6%8B%9F%E5%90%88"><span class="toc-text">十，拟合</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8D%81%E4%B8%80%EF%BC%8C%E6%B3%9B%E5%8C%96%E8%83%BD%E5%8A%9B"><span class="toc-text">十一，泛化能力</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8D%81%E4%BA%8C%EF%BC%8C%E6%AD%A3%E5%88%99%E5%8C%96"><span class="toc-text">十二，正则化</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-L2%E6%AD%A3%E5%88%99%E5%8C%96"><span class="toc-text">1. L2正则化</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-L1%E6%AD%A3%E5%88%99%E5%8C%96"><span class="toc-text">2. L1正则化</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8D%81%E4%B8%89%EF%BC%8C%E9%B2%81%E6%A3%92%E6%80%A7"><span class="toc-text">十三，鲁棒性</span></a></li></ol>
+      </div>
+    </div>
+    
+    <!-- 同分类文章 -->
+    
+    <div class="explorer-section">
+      <div class="section-header">
+        <i class="fas fa-folder"></i>
+        <span>CATEGORY POSTS</span>
+      </div>
+      <div class="section-content">
+        
+      </div>
+    </div>
+    
+    
+    <!-- 标签列表 -->
+    
+    <div class="explorer-section">
+      <div class="section-header">
+        <i class="fas fa-tags"></i>
+        <span>ARTICLE TAGS</span>
+      </div>
+      <div class="section-content">
+        
+          <div class="tag-item">
+            <i class="fas fa-tag"></i>
+            <a href="/tags/%E6%8A%80%E6%9C%AF/">技术</a>
+            <span class="count">(10)</span>
+          </div>
+        
+          <div class="tag-item">
+            <i class="fas fa-tag"></i>
+            <a href="/tags/AI/">AI</a>
+            <span class="count">(1)</span>
+          </div>
+        
+          <div class="tag-item">
+            <i class="fas fa-tag"></i>
+            <a href="/tags/%E5%8E%9F%E7%90%86/">原理</a>
+            <span class="count">(1)</span>
+          </div>
+        
+      </div>
+    </div>
+    
+  </div>
+
+  <!-- 主要内容区域 -->
+  <div class="editor-content">
+    <div class="tab-bar">
+      <div class="tab active">
+        <i class="fas fa-file-alt"></i>
+        <span>AI工作原理详解.md</span>
+      </div>
+    </div>
+    
+    <div class="content-area">
+      <article class="post-content">
+        <div class="post-header">
+          <h1>AI工作原理详解</h1>
+          <div class="post-meta">
+            <span class="date">
+              <i class="fas fa-calendar-alt"></i>
+              2025-08-21
+            </span>            
+              <span class="categories">
+                <i class="fas fa-folder"></i>
+                <div class="categories-list">
+                  <ul class="category-item-post-list"><li class="category-item-post-list-item"><a class="category-item-post-list-link" href="/categories/%E7%A7%91%E6%99%AE/">科普</a></li></ul>
+                </div>
+              </span>
+            
+            
+              <span class="tags">
+                <i class="fas fa-tags"></i>
+                <div class="tags-list">
+                  <ul class="tag-item-post-list" itemprop="keywords"><li class="tag-item-post-list-item"><a class="tag-item-post-list-link" href="/tags/AI/" rel="tag">AI</a></li><li class="tag-item-post-list-item"><a class="tag-item-post-list-link" href="/tags/%E5%8E%9F%E7%90%86/" rel="tag">原理</a></li><li class="tag-item-post-list-item"><a class="tag-item-post-list-link" href="/tags/%E6%8A%80%E6%9C%AF/" rel="tag">技术</a></li></ul>
+                </div>
+              </span>
+            
+          </div>
+        </div>
+        
+        <div class="post-body vscode-markdown">
+          <h1 id="一，AI工作原理"><a href="#一，AI工作原理" class="headerlink" title="一，AI工作原理"></a>一，AI工作原理</h1><p>我们日常生活中接触的大语言模型(LLM),简单来讲就是所谓的AI.它的工作原理其实非常简单,用户输入一段文字之后会得到一个输出的文字内容.输入到输出的这种模式可以想起数学中的一个概念叫函数,说白了LLM就是一个大型的函数套娃系统.</p>
+<img src="/image/post_image/post10/S1.png" alt="S1" style="zoom: 80%;" />
+
+<p>一般我们所学的函数结果是固定的,比如我给x提供一个值那么必然会有个对应的y输出.这种固定性显然跟我们需要的AI不符合,跟AI的每一次聊天都是不同的,不会因为输入内容的相同而输出同样的内容.关于这种随机性和准确性是怎么搞出来的,下面会从最基础的概念到深层概念递进方式介绍这些概念.</p>
+<h1 id="二，权重"><a href="#二，权重" class="headerlink" title="二，权重"></a>二，权重</h1><p>权重是指一个数据对另一个数据的重要程度,也就是相互关联性有多强的标志.下面举一个例子:</p>
+<p><strong>我在路上看见了一只猫,它很可爱.</strong></p>
+<p>在上面这个句子当中,对比一下”我”和”可爱”的关系,再对比一下”猫”和”它”的关系.显然”它”本身指的就是”猫”所以这两之间的关联性很强,也就是权重最高.”我”和”可爱”这两个词的关联性就没有那么强了权重也比较低.这就是权重的概念.</p>
+<p>最开始人们引入了重要性的概念,也就是把所有输入进行求和,但是这显然有个弊端,无法知道输入的第一个字和下个字之前的关联:<br>$$<br>z &#x3D; x_1 + x_2 + \cdots + x_n &#x3D; \sum_{i&#x3D;1}^{n} x_i<br>$$<br>这样的合并方式导致所有输入的重要性都是同等存在的,无法确认字和字之前的重要性了,所以就引入了一个新的概念叫<strong>权重</strong>.<br>$$<br>z &#x3D; \sum_{i&#x3D;1}^{n} (x_i \cdot w_i)<br>$$<br>现在<code>w_i</code>作为权重可以控制对输入<code>x_i</code>的影响力了.举个例子比如我们的输入有三个声音分别是<code>x_1</code>,<code>x_2</code>,<code>x_3</code>.这三个声音当中<code>x_2</code>是噪音,剩下的是正确声音.按照以上公式进行计算时由于<code>x_1</code>是正确的所以权重<code>w_1</code>会调大一点,到了<code>x_2</code>发现是噪音为了不影响最终结果会把<code>w_2</code>调小一点甚至调成负的.通过控制<code>w_i</code>来对生成结果进行控制.</p>
+<p>这就是ai的”<strong>学习</strong>“过程,通过不断的控制权重<code>w_i</code>来输出最接近真实答案的过程.</p>
+<h1 id="三，激活函数"><a href="#三，激活函数" class="headerlink" title="三，激活函数"></a>三，激活函数</h1><p>上一部分我们升级了函数通过权重进行控制输出内容,为了达到更好的控制效果下一步我们加入一个可以调节的变量:</p>
+<p>$$<br>z &#x3D; \left( \sum_{i&#x3D;1}^{n} (x_i \cdot w_i) \right) + b<br>$$<br>这里所加的b变量叫做偏置(Bias),简化的公式就变成了:</p>
+<figure class="highlight fix"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs fix"><span class="hljs-attr">输出 </span>=<span class="hljs-string"> (权重求和) + 偏置</span><br></code></pre></td></tr></table></figure>
+
+<p>这个偏置b是独立于所有输入内容,因此可以调整函数输出,使整体上下移动.这个完整的式子全部当中一个整体就成为了激活函数:<br>$$<br>y &#x3D; f(z) &#x3D; f\left(\left(\sum_{i&#x3D;1}^{n} (x_i \cdot w_i)\right) + b\right)<br>$$<br>相当于这里的<code>z</code>通过一个决策函数来生成最终的输出,以下是简化公式:</p>
+<figure class="highlight fix"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs fix"><span class="hljs-attr">最终输出 </span>=<span class="hljs-string"> 激活函数( 加权和 + 偏置 )</span><br></code></pre></td></tr></table></figure>
+
+<p>因此可以得出<strong>激活函数</strong>就相当于是个权重之和加上了一个偏置的函数罢了.</p>
+<h1 id="四，神经元和神经网"><a href="#四，神经元和神经网" class="headerlink" title="四，神经元和神经网"></a>四，神经元和神经网</h1><p>一听到神经元就能想起生物学上的组成神经系统的细胞,ai领域的神经元概念跟这个大差不差,下面是生物学上面的神经元概念图:<br><img src="/image/post_image/post10/S2.png" alt="S2" style="zoom:50%;" /></p>
+<p>从这个图可以看出很多神经元细胞相互连接生成了一个复杂的网状结构,那ai领域的神经元是不是也是这样的网状结构咱们来探索一下.</p>
+<p>既然我们知道了激活函数,那么也就知道了神经元的输出就是激活函数的值:</p>
+<figure class="highlight fix"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs fix"><span class="hljs-attr">神经元输出 </span>=<span class="hljs-string"> 激活函数( 加权和 + 偏置 )</span><br></code></pre></td></tr></table></figure>
+
+<p>知道了神经元,接下来解释一下神经网是怎么构成的,我们这里把一个神经元想象成一个乐高积木,把很多乐高积木连在一起排成一排并列(左右排序)的形式.这一排就代表一层:</p>
+<figure class="highlight jboss-cli"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs jboss-cli">层₁ = [神经元₁, 神经元₂, 神经元₃, <span class="hljs-string">...</span>]<br>层₂ = [神经元₁, 神经元₂, 神经元₃, <span class="hljs-string">...</span>]<br>层₃ = [神经元₁, 神经元₂, 神经元₃, <span class="hljs-string">...</span>]<br><span class="hljs-string">.............</span><br></code></pre></td></tr></table></figure>
+
+<p>把这种层称为<strong>神经元层</strong>,现在把每一排的乐高积木上下叠加在一起组成了网络:</p>
+<figure class="highlight clean"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs clean">输入 -&gt; 层₁ -&gt; 层₂ -&gt; 层₃ -&gt; ... -&gt; 输出<br></code></pre></td></tr></table></figure>
+
+<p>这种把多个层叠加在一起形成的网络结构就成为<strong>神经网</strong>.</p>
+<h1 id="五，输入层-输出层-隐藏层"><a href="#五，输入层-输出层-隐藏层" class="headerlink" title="五，输入层,输出层,隐藏层"></a>五，输入层,输出层,隐藏层</h1><p>在组成的神经网当中丢给ai的内容叫做<strong>输入层</strong>.输入层可以是任何形式的文字,因为函数计算的是数字计算机认识的也是数字,所以不管是音频,视频,图片,文字等各种形式的资源全部都得转换成数字的形式丢给这个神经网.</p>
+<p>输入层进入的数据会经过神经元层当中的神经元的计算到达下一个层,这过程当中会经过很多个层最后再到达输出层(层的多少取决于模型的复杂程度),这种在中间我们看不到的层叫做<strong>隐藏层</strong>.</p>
+<p>经过多个隐藏层最后到我们看到的输出内容,最后经过的这个层叫做<strong>输出层</strong>.</p>
+<p><img src="/image/post_image/post10/S3.png" alt="S3"></p>
+<h1 id="六，损失函数"><a href="#六，损失函数" class="headerlink" title="六，损失函数"></a>六，损失函数</h1><p>我们已经完成了一个完整的神经网,这个神经网会根据输入经过一系列计算得出输出结果.但是我们怎么知道这个输出结果是否正确.比如我们输入给了一个车的照片但是输出内容中显示这个是动物的概率有多大.为了知道模型训练的好坏就诞生了这个损失函数的概念.下面我们来看一张图:<br><img src="/image/post_image/post10/S4.png" alt="S4" style="zoom: 67%;" /></p>
+<p>看到照片不要被吓一跳,其实要讲的内容很简单.在这个图当中蓝色的点代表我们的训练样本也就是丢给ai让其学习的资料.黑色的线代表ai从这个样本当中学习得到的规律(实际上这个函数不是线性的,这里为了方便展示举例的).</p>
+<p>我来举个例子,我们给ai丢了大量的公司年收入数据,每个蓝色的点代表每年的年收入,然后ai试图学习找出这个年收入的规律就画出了这么一条线用来预测未来的年收入.从这条线上面得到的数据都是一个<strong>预测值</strong> <code>y_pred</code> .而实际的年收入就是<strong>真实值</strong><code>y_true</code>.那这个真实收入和预测收入之间的差叫做<strong>误差</strong>.</p>
+<p>带着这些知识看图应该轻轻松松就能理解,下面把上面所说的结合成公式来看一下:<br>$$<br>Loss &#x3D;  |y_{\text{true}} - y_{\text{pred}}|<br>$$<br>绝对值在数学当中每次都让人特别头疼,所以为了方便我们去掉绝对值换成更加简单的平方,改成平方有两个好处一个是我们不关心误差是大了还是小了,另一个是可以容忍小幅度的误差比如2的平方是4,但绝不能容忍大幅度误差比如10的平方是100.这样就能避免犯很大的错误了.</p>
+<p>接下来就对所有误差进行求和再求平均操作,这样就得到了最终的<strong>损失函数</strong>:<br>$$<br>Loss (MSE) &#x3D; \frac{1}{n} \sum_{i&#x3D;1}^{n} (y_{\text{true}, i} - y_{\text{pred}, i})^2<br>$$<br>损失函数得出的就是<strong>损失(Loss)</strong>,我们整个训练的目标就很明确了,通过不断的调整神经元(激活函数)当中的权重和偏置让这个损失值变得最小.</p>
+<h1 id="七，正向传播和反向传播"><a href="#七，正向传播和反向传播" class="headerlink" title="七，正向传播和反向传播"></a>七，正向传播和反向传播</h1><p>结合上面所学的知识我们重新疏理一下整个流程,首先用户进行输入,第一层拿到输入层的数据之后调整权重和偏置再把得出的结果传递给下一层,下一层根据上一层给的数据调整自己的权重和偏置再传递给下一层以此类推最后到达输出层.这种从输入层到输出层的参数调整过程就成为<strong>正向传播</strong>.</p>
+<p><img src="/image/post_image/post10/S5.png" alt="S5"></p>
+<p>最终拿到输出层的数据之后跟我们原来训练用的正确数据进行对比,这就好比学生作答老师对比正确答案看看学生的答案跟正确答案到底偏离了多少.然后给出一个分数这个分数就是我们前面所说的损失值(Loss),分数越高就说明错的越离谱.咱们就不讨论损失值低的情况,那损失值高了怎么办?</p>
+<p>损失值高得找出是什么原因导致的,从最后一层往前推算出神经网络当中的每一个参数(权重和偏置)为这次的错误有多大的责任,然后告诉他要把适当的往正确的方向进行调整.这就是”学习”的核心,而这整个往后推算的过程叫<strong>反向传播</strong>.</p>
+<p><img src="/image/post_image/post10/S6.png" alt="S6"></p>
+<h1 id="八，梯度"><a href="#八，梯度" class="headerlink" title="八，梯度"></a>八，梯度</h1><h2 id="1-梯度的概念"><a href="#1-梯度的概念" class="headerlink" title="1.梯度的概念"></a>1.梯度的概念</h2><p>我们来举一个经典的例子,你要去爬山,上山最快的指向山顶的那个方向就是<strong>梯度</strong>,正向传播过程中会出现这个梯度.这个山脉的地形相当于是个损失函数,山的高度就是损失值.我们的位置代表了模型当中所有参数(权重,偏置)的取值.我们的目标就是要下山找到山的最低位置(损失值最小的点).</p>
+<h2 id="2-梯度下降"><a href="#2-梯度下降" class="headerlink" title="2.梯度下降"></a>2.梯度下降</h2><img src="/image/post_image/post10/S7.png" alt="S7" style="zoom:50%;" />
+
+<p>要下山时我们的眼睛被人蒙上了,蒙着眼睛下山应该怎么做?</p>
+<p>按正常逻辑来讲肯定要用脚试探性的感受一下哪个方向是对下山来说是陡峭的,朝着这个陡峭的方向小步小步的走最终肯定能走到山地.那我们这整个蒙眼下山的过程就是<strong>梯度下降</strong>.</p>
+<p>通过反向传播,计算出损失函数对于每一个参数的梯度,这个梯度说白了就是如果我稍微调整这个权重w,损失函数就会上升的最快.梯度不停的下降损失值也会不停的下降.下面是梯度下降的简化公式:</p>
+<figure class="highlight abnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs abnf">新权重 <span class="hljs-operator">=</span> 旧权重 - 梯度<br></code></pre></td></tr></table></figure>
+
+<p>通过数学公式表达:<br>$$<br>w_{\text{new}} &#x3D; w_{\text{old}} - \nabla L<br>$$<br>在数学当中我们把梯度标记为∇L.</p>
+<h2 id="3-梯度爆炸"><a href="#3-梯度爆炸" class="headerlink" title="3.梯度爆炸"></a>3.梯度爆炸</h2><p>在反向传播过程当中,梯度的计算就是从后往前的计算过程,计算过程极其复杂逐层相乘.万一算出来是个超大的数字,经过多次相乘会变成一个天文数字,这种情况就是<strong>梯度爆炸</strong>.层数越多,相乘的次数就越多,爆炸的风险就会变大.</p>
+<p>那梯度爆炸的后果是什么权重的数值会变得无穷大最终计算出的效果也是特别糟糕,所有之前训练好的知识也会被摧毁导致模型完全不可用状态.</p>
+<h1 id="九，学习率"><a href="#九，学习率" class="headerlink" title="九，学习率"></a>九，学习率</h1><h2 id="1-概念介绍"><a href="#1-概念介绍" class="headerlink" title="1.概念介绍"></a>1.概念介绍</h2><p>我们又回到下山的例子当中,假如我们是个巨人,一跨步就能走的很远.那我们很有可能跨一大步就跨过了山地直接到了另一个山上面.还有可能当前所在山比之前还高,我们又跨回去反复找山地,但是永远都达不到山的最低点.<br>训练当中损失函数就来回震荡,甚至可能变成不是数字的状态(NaN,Not a Number)导致训练失败.</p>
+<p>假如我们是个蚂蚁,每一步跨的都特别小,最终肯定能走到山地,但是这个过程极其的漫长.<br>训练当中损失函数会下降的特别慢,训练耗费巨大的资源和时间.</p>
+<p>上面两个例子当中所说的步子指的是<strong>学习率</strong>,在数学当中我们把学习率标记为η.</p>
+<p>在梯度下降的过程当中,参数是通过梯度来变化的,那这个变化的大小就是学习率来定义,梯度下降的更新公式就变成了:</p>
+<figure class="highlight abnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs abnf">新权重 <span class="hljs-operator">=</span> 旧权重 − 学习率 × 梯度<br></code></pre></td></tr></table></figure>
+
+<p>通过数学公式表达:<br>$$<br>w_{\text{new}} &#x3D; w_{\text{old}} - \eta \cdot \nabla L<br>$$</p>
+<h2 id="2-举例说明"><a href="#2-举例说明" class="headerlink" title="2.举例说明"></a>2.举例说明</h2><p>下面会举例详细的学习步骤:<br>我们举一个最简单不带激活函数和偏置的神经元例子:<br>$$<br>y_{\text{pred}} &#x3D; w * x<br>$$<br>我们的训练数据是<code>x = 2</code>时对应的答案<code>y = 10</code>,因为模型刚开始什么都不知道我们把权重设为<code>w = 3</code>.</p>
+<h3 id="1-正向传播-模型用当前的权重进行预测"><a href="#1-正向传播-模型用当前的权重进行预测" class="headerlink" title="(1)正向传播 : 模型用当前的权重进行预测"></a>(1)正向传播 : 模型用当前的权重进行预测</h3><p>$$<br>y_{\text{pred}} &#x3D; w * x &#x3D; 3 * 2 &#x3D; 6<br>$$</p>
+<h3 id="2-计算损失"><a href="#2-计算损失" class="headerlink" title="(2)计算损失"></a>(2)计算损失</h3><p>$$<br>Loss &#x3D; (y_{\text{true}} - y_{\text{pred}})^2 &#x3D; (10−6) ^2&#x3D;4 ^2&#x3D;16<br>$$</p>
+<p>当前函数的损失值为16.</p>
+<h3 id="3-反向传播"><a href="#3-反向传播" class="headerlink" title="(3)反向传播"></a>(3)反向传播</h3><p>通过算法计算出损失对权重<code>w</code>的梯度是多少:<br>$$<br>\frac{\partial L}{\partial w} &#x3D; 2(y_{\text{true}} - wx)(-x) &#x3D; 2(10-6)(-2) &#x3D; -16<br>$$<br>得出的数是-16说明当前的方向是”负向”的,为了减少损失我们肯定要增加权重<code>w</code>的值.</p>
+<h3 id="4-使用学习率来更新权重"><a href="#4-使用学习率来更新权重" class="headerlink" title="(4)使用学习率来更新权重"></a>(4)使用学习率来更新权重</h3><p>现在代入更新参数的公式:<br>$$<br>w_{\text{new}} &#x3D; w_{\text{old}} - \eta \cdot \frac{\partial L}{\partial w} &#x3D; 3 - \eta \cdot (-16)<br>$$<br>下面通过调整学习率的大小看看成果:</p>
+<ul>
+<li><p>η &#x3D; 0.01 比较好一点的值<br>  $$<br>  w_{\text{new}} &#x3D;3−0.01⋅(−16)&#x3D;3−(−0.16)&#x3D;3.16<br>  $$<br>  梯度要我们增加权重<code>w</code>的值,学习率控制了一点点,权重就从3变成了3.16,正确答案是5.已经在逐步接近真实答案了.</p>
+</li>
+<li><p>η &#x3D; 0.1 比较大的值<br>  $$<br>  w_{\text{new}} &#x3D; 3−0.1⋅(−16)&#x3D;3−(−1.6)&#x3D;4.6<br>  $$<br>  现在权重从3直接变成了4.6,虽然这个值非常接近真实值,但是也有可能步子太大跨过正确值.</p>
+</li>
+<li><p>η &#x3D; 0.2 很大且危险的值<br>$$<br>w_{\text{new}} &#x3D; 3−0.2⋅(−16)&#x3D;3−(−3.2)&#x3D;6.2<br>$$<br>现在权重直接跳到了6.2,已经越过真实答案,权重比之前更差了.这个就成为<strong>过冲</strong>(Overshooting).</p>
+</li>
+<li><p>η &#x3D; 0.0001 一个特别小的值<br>$$<br>w_{\text{new}} &#x3D; 3−0.0001⋅(−16)&#x3D;3−(−0.0016)&#x3D;3.0016<br>$$<br>迈出了一小步,按照正确方向控制了,但是变化太小,需要成千上万次的这种更新才能达到正确的值.</p>
+</li>
+</ul>
+<h1 id="十，拟合"><a href="#十，拟合" class="headerlink" title="十，拟合"></a>十，拟合</h1><p>假设现在我们有很多数据样本,模型经过不停的训练会得出一个接近真实函数的曲线.要是得出的不是曲线而是一个直线只能正确输出某一部分值的话,这就说明模型<strong>欠拟合</strong>.要是训练出来的模型函数非常接近真实函数那么这就是<strong>拟合良好</strong>.</p>
+<p>要是训练出来的模型函数可以准确计算出所有训练中的数据,但是无法正确计算出训练数据集之外的数据这就说明是<strong>过拟合</strong>.</p>
+<p>看下面这张图就一目了然了:</p>
+<p><img src="/image/post_image/post10/S8.png" alt="S8"></p>
+<ul>
+<li>第一张图橙色的曲线代表是真实的函数曲线,蓝色的直线代表模型训练完之后的函数,这种状态下模型只有在一部分情况下能得出正常的答案,但在大部分情况下结果跟实际偏差太大.这种情况就是典型的欠拟合</li>
+<li>第二张图当中模型的函数跟真实的函数几乎是贴近的,这种情况下模型的函数是最佳的,也成为拟合良好.</li>
+<li>第三张图当中模型能准确的算出所有的训练数据,但是只要给的数据是训练数据集之外的那么模型就出现很大的损失,这种情况就是典型的过拟合状态.</li>
+</ul>
+<h1 id="十一，泛化能力"><a href="#十一，泛化能力" class="headerlink" title="十一，泛化能力"></a>十一，泛化能力</h1><p>模型在自己训练的数据上的得分表现特别好,但是在没见过的数据上的表现特别差的情况,也就是刚刚提到的过拟合状态.模型的这种情况称为<strong>泛化能力差</strong>.</p>
+<p><strong>泛化能力</strong>所指的就是模型在自己没有见过的数据集上的表现能力.为了提高模型的泛化能力可以增大数据集,调整学习率等各种手段来防止过拟合.</p>
+<h1 id="十二，正则化"><a href="#十二，正则化" class="headerlink" title="十二，正则化"></a>十二，正则化</h1><p>我们已经知道了过拟合的模型在新数据上的表现能力很差,一个过拟合的模型在数学上通常是由于它内部的权重<code>w</code>变得很大,从上方的过拟合函数图就能发现函数的变化幅度很大.既然是由权重<code>w</code>过大导致的,那有没有办法让训练过程中的<code>w</code>一直保持小的状态呢?</p>
+<p>当然有,人们想到了一个极其绝妙的办法来解决了这个过拟合的问题,那就是给损失函数加上一个所有权重的平方和,简化公式如下:</p>
+<figure class="highlight fix"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs fix"><span class="hljs-attr">总损失 </span>=<span class="hljs-string"> 损失值 + 正则化惩罚项</span><br></code></pre></td></tr></table></figure>
+
+<h2 id="1-L2正则化"><a href="#1-L2正则化" class="headerlink" title="1. L2正则化"></a>1. L2正则化</h2><p>目前应用最广泛的就是<strong>L2正则化</strong>,也被称为<strong>权重衰减</strong>.就是给损失值加上一个所有权重的平方和.这样即保证了模型梯度的正确下降也保证了过拟合的出现.下面来看看这个惩罚公式:<br>$$<br>\text{L2 惩罚项} &#x3D; \lambda \sum_{i&#x3D;1}^{n} w_i^2<br>$$<br>然后完整的损失函数就是:<br>$$<br>总损失&#x3D;预测误差+ \lambda \sum_{i&#x3D;1}^{n} w_i^2<br>$$<br>在L2正则化当中权重是平方的,所以一个很大的权重会导致惩罚变得很大,所以在训练时模型会尽可能的让权重缩小.还有一个特征是不会让权重变成0,及时是一个非常小的权重比如0.00001,平方之后权重变得极其微小.所以会无限接近0但是不会变成0.</p>
+<h2 id="2-L1正则化"><a href="#2-L1正则化" class="headerlink" title="2. L1正则化"></a>2. L1正则化</h2><p>L1正则化是一个更加强大的正则化技术,看惩罚公式就能知道它的强大之处了:<br>$$<br>\text{L2 惩罚项} &#x3D; \lambda \sum_{i&#x3D;1}^{n} |w_i|<br>$$<br>因为是绝对值之和而不是平方和,所以权重调整的过程当中可以变成0.权重变成0说明权重连接的这个神经元就被关闭了.所以不需要的特征都会被关闭,只保留那些最有用的特征.这就使得模型变得简单,变得更小.</p>
+<p>一般来说L2正则化主要防止过拟合使权重普遍变小,L1正则化让部分权重变0,简化模型,筛选特征.</p>
+<h1 id="十三，鲁棒性"><a href="#十三，鲁棒性" class="headerlink" title="十三，鲁棒性"></a>十三，鲁棒性</h1><p>一个模型的所有数据都完好无损,泛化能力也很不错,能够正确的输出答案.但是我们的输入稍微加一点变化比如输入当中带点错别字,逻辑有问题的句子等.输出的结果还是正确的说明这个模型的<strong>鲁棒性</strong>很好,输出结果变得糟糕说明<strong>鲁棒性</strong>很差.</p>
+<p>为了提高模型的鲁棒性,就在训练时给模型提供各种各样没有见过的数据,对于文字可以适当的把替换文字当中的同义词,删除某些单词,改变语序等.对于图片可以对图片进行不同程度的旋转,裁剪等</p>
+
+        </div>
+        
+        <!-- 文章导航 -->
+        <nav class="post-nav">
+          
+          
+            <a class="next" href="/2025/04/11/post9/">
+              函数Hook技术（Trampoline 蹦床）
+              <i class="fas fa-chevron-right"></i>
+            </a>
+          
+        </nav>
+      </article>
+    </div>
+  </div>
+</div>
+
+    </div>
+    <footer class="footer">
+  <div class="status-bar">
+    <div class="status-item">
+      <i class="fas fa-code-branch"></i>
+      master
+    </div>
+    <div class="status-item">
+      <i class="fas fa-sync"></i>
+      bahadir
+    </div>
+    <div class="status-item">
+      <i class="fas fa-clock"></i>
+      2025-08-22
+    </div>
+    <div class="status-item">
+      Designed By&nbsp; <a href="https://github.com/47bahadir" target="_blank"> bahadir</a>
+    </div>
+    <div class="status-item github">
+      <a href="https://github.com/47bahadir" target="_blank">
+        <i class="fab fa-github"></i>
+      </a>
+    </div>
+    <div class="status-item" id="site-runtime" style="margin-left: auto;">
+      <i class="fas fa-heartbeat"></i>
+      <span id="runtime-text">Site running for...</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+// 网站运行时间计算器
+function updateSiteRuntime() {
+  // 设置网站启动时间 (请根据实际情况修改这个日期)
+  const startDate = new Date('2025-02-22 00:00:00'); // 修改为你的网站启动日期
+  const now = new Date();
+  const timeDiff = now - startDate;
+
+  // 计算天数、小时、分钟、秒数
+  const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+
+  // 更新显示文本
+  const runtimeText = `Site running for ${days} days ${hours} hours ${minutes} minutes ${seconds} seconds`;
+  const runtimeElement = document.getElementById('runtime-text');
+  if (runtimeElement) {
+    runtimeElement.textContent = runtimeText;
+  }
+}
+
+// 页面加载完成后开始计时
+document.addEventListener('DOMContentLoaded', function() {
+  updateSiteRuntime(); // 立即更新一次
+  setInterval(updateSiteRuntime, 1000); // 每秒更新一次
+});
+</script>
+
+    
+    <!-- 全局配置 -->
+    <script>
+      window.HEXO_CONFIG = {
+        language: "zh-CN",
+        root: "/"
+      };
+      
+      // 特定于搜索的配置
+      window.VSC4T_SEARCH = {
+        root: "/"
+      };
+    </script>
+    
+    <script src="//cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/highlight.js@11.7.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+    <!-- 这里可以放置自定义脚本 -->
+<script>
+document.addEventListener('DOMContentLoaded', (event) => {
+  // Apply smooth scroll to non-TOC anchor links
+  document.querySelectorAll('a[href^="#"]:not(.toc-link)').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+      e.preventDefault();
+      // Check if querySelector is valid before using it
+      try {
+        const targetSelector = this.getAttribute('href');
+        // Basic check for potentially invalid selectors (though not exhaustive)
+        if (targetSelector && targetSelector.length > 1) { 
+          const targetElement = document.querySelector(targetSelector);
+          if (targetElement) {
+            targetElement.scrollIntoView({
+              behavior: 'smooth'
+            });
+          } else {
+            console.warn('Smooth scroll target not found:', targetSelector);
+          }
+        } else {
+           console.warn('Invalid href for smooth scroll:', targetSelector);
+        }
+      } catch (error) {
+        console.error('Error during smooth scroll:', error, 'Selector:', this.getAttribute('href'));
+        // Fallback or alternative behavior if needed
+        // For example, try getElementById if it's just an ID
+        const targetId = this.getAttribute('href').slice(1);
+        try {
+            const targetElementById = document.getElementById(decodeURIComponent(targetId));
+            if (targetElementById) {
+                targetElementById.scrollIntoView({ behavior: 'smooth' });
+            }
+        } catch (idError) {
+             console.error('Fallback getElementById also failed:', idError);
+        }
+      }
+    });
+  });
+});
+</script>
+<script src="/js/toc.js"></script>
+
+<!-- Scripts -->
+<script>
+  // 将语言文件中的翻译传递给前端
+  window.HEXO_CONFIG = {
+    language: "zh-CN",
+    search_placeholder: "输入关键词搜索...",
+    search_no_results: "未找到相关结果",
+    search_result: "نتيجة",
+    search_results: "搜索结果",
+    search_results_found: "找到 undefined 个结果",
+    search_in: "搜索范围",
+    search_in_title: "标题",
+    search_in_content: "内容",
+    search_in_tags: "标签",
+    search_in_categories: "分类",
+    search_filters: "搜索过滤器",
+    search_recent: "最近搜索",
+    search_clear: "清除",
+    search_loading: "加载中...",
+    search_error: "加载搜索数据时出错"
+  };
+</script>
+
+
+
+<!-- 添加所有需要的脚本 -->
+<script src="/js/main.js"></script>
+<script src="/js/search.js"></script>
+
+
+    <script>
+      // 移动端菜单切换
+      $(document).ready(function() {
+        $('.mobile-menu-toggle').click(function() {
+          $('.sidebar-explorer').toggleClass('show');
+        });
+      });
+    </script>
+  </body>
+</html>
