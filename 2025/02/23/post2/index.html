@@ -23,7 +23,7 @@
       }
     };
   </script>
-  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
   <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css">
@@ -280,22 +280,22 @@
 <p>这一期教程的分析内容主要针对生命值函数。下面对这一函数进行锁定位置和详细分析运行逻辑。本系列教程的后续会对游戏的主要功能函数都挨个进行分析。</p>
 <hr>
 <h1 id="生命值函数的分析"><a href="#生命值函数的分析" class="headerlink" title="生命值函数的分析"></a>生命值函数的分析</h1><h2 id="一，定位生命值"><a href="#一，定位生命值" class="headerlink" title="一，定位生命值"></a>一，定位生命值</h2><p>首先打开Cheat Engine并且点击左上角的选择程序按钮，选择游戏程序点确定就能把调试器附加到游戏上面。此时可以对游戏内存地址进行任意的搜索。</p>
-<img src="\image\post_image\post2\Scre1.png" alt="Scre1" style="zoom:67%;" />
+<img src="/image/post_image/post2/Scre1.png" alt="Scre1" style="zoom:67%;" />
 
 <p>生命值一般在游戏当中以浮点值的形式存储的，单浮点数占用4个字节的位置，因此搜索时可以用4字节方式搜索也可以直接按浮点数形式搜索。一般情况下都是按四字节来搜索，因为少部分游戏不采用浮点值存储而用整数值，所以以防万一我这里还是按照四字节方式来搜索。在这款游戏中生命值的具体数值时看不到的，在低难度的情况下收到伤害之后生命值会慢慢的进行回复。在满生命值状态下我们按照100来进行搜索或者按照未知数值进行搜索。搜索完之后可以看到有上千万的结果，为了筛选出自己所需的值就要让生命值进行变动。游戏中的生命值变动之后扫描类型就可以换成增加的值或者减少的值来反复搜索直到找到自己所需要的生命值。详细步骤可以参考网上各种教程来学习，这里就不展开讲述了。</p>
-<img src="\image\post_image\post2\Scre2.png" alt="Scre2" style="zoom:67%;" />
+<img src="/image/post_image/post2/Scre2.png" alt="Scre2" style="zoom:67%;" />
 
 <p>最终找到的浮点变量可以进行修改看看游戏中的生命值是否有发生改变，要是没有发生变化就说明找错了得重新找。</p>
 <h2 id="二，找出生命值相关的汇编代码"><a href="#二，找出生命值相关的汇编代码" class="headerlink" title="二，找出生命值相关的汇编代码"></a>二，找出生命值相关的汇编代码</h2><p>在找到的变量上鼠标右键选择 <strong>Find out what writes to this address</strong> 会弹出一个窗口来检测修改此内存地址的汇编代码的窗口。</p>
-<img src="\image\post_image\post2\Scre3.png" alt="Scre3" style="zoom:67%;" />
+<img src="/image/post_image/post2/Scre3.png" alt="Scre3" style="zoom:67%;" />
 
 <p>在游戏中被敌方击中后就会在窗口中显示相应的汇编代码，在窗口的下方显示各个寄存器在执行此代码时存储的值。</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs assembly">008082E4 - D9 9E 18020000  - fstp dword ptr [esi+00000218] 		;修改生命值的汇编代码<br></code></pre></td></tr></table></figure>
 
-<img src="\image\post_image\post2\Scre4.png" style="zoom:67%;" />
+<img src="/image/post_image/post2/Scre4.png" style="zoom:67%;" />
 
 <p>点击窗口右边的 <strong>Show disassembler</strong> 后会弹出另一个大窗口叫 <strong>Memory Viewer</strong> 。窗口上方显示的就是汇编代码区域记录着内存地址，机器码，汇编代码，备注信息。窗口下方显示的则是内存具体值可以右键改变显示形式。</p>
-<img src="\image\post_image\post2\Scre5.png" alt="Scre5" style="zoom: 33%;" />
+<img src="/image/post_image/post2/Scre5.png" alt="Scre5" style="zoom: 33%;" />
 
 <p>在我们刚刚找到的那一行代码上面鼠标右键选择 <strong>Replace with code that does nothing</strong> 就可以将此处的代码全部改成 <strong>Nop</strong> 指令。在游戏中我们就实现了真正的无敌。</p>
 <h2 id="三，在IDA-Pro中分析此函数"><a href="#三，在IDA-Pro中分析此函数" class="headerlink" title="三，在IDA Pro中分析此函数"></a>三，在IDA Pro中分析此函数</h2><h3 id="1-调用约定分析"><a href="#1-调用约定分析" class="headerlink" title="1.调用约定分析"></a>1.调用约定分析</h3><p>将游戏的可执行文件 <strong>HMA.exe</strong> 拖入到IDA Pro当中等待分析完毕。在 Cheat Engine 中的代码窗口中选择刚刚找到的那一行代码，然后按快捷键 <strong>Ctrl + G</strong> 就会显示地址，复制此地址打开IDA Pro按快捷键 <strong>G</strong> 在弹出的窗口当中粘贴并按回车就能跳转到相应的代码位置。按 <strong>F5</strong> 键会把汇编代码转换成C++的伪代码以便我们看懂。</p>
@@ -391,7 +391,7 @@
     </div>
     <div class="status-item">
       <i class="fas fa-clock"></i>
-      2025-08-22
+      2026-08-19
     </div>
     <div class="status-item">
       Designed By&nbsp; <a href="https://github.com/47bahadir" target="_blank"> bahadir</a>
@@ -456,6 +456,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <script src="//cdn.jsdelivr.net/npm/highlight.js@11.7.0/highlight.min.js"></script>
     <script>hljs.highlightAll();</script>
     <!-- 这里可以放置自定义脚本 -->
+<script src="/js/toc-highlight.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', (event) => {
   // Apply smooth scroll to non-TOC anchor links
@@ -496,7 +497,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
   });
 });
 </script>
-<script src="/js/toc.js"></script>
 
 <!-- Scripts -->
 <script>

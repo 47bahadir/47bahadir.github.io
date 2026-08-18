@@ -23,7 +23,7 @@
       }
     };
   </script>
-  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
   <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css">
@@ -279,11 +279,11 @@
           <p>这一期主要分析射击函数，分析步骤跟上一期一样先用Cheat Engine来定位函数位置，再通过IDA Pro进行静态分析。大多数FPS游戏中找射击函数是要通过子弹数来定位的，第一步自然而然就是找出内存中的子弹存储地址。再查看此地址被哪个汇编代码所更改来锁定相应的函数。</p>
 <hr>
 <h1 id="射击函数的分析"><a href="#射击函数的分析" class="headerlink" title="射击函数的分析"></a>射击函数的分析</h1><h2 id="一，定位子弹内存地址"><a href="#一，定位子弹内存地址" class="headerlink" title="一，定位子弹内存地址"></a>一，定位子弹内存地址</h2><p>首先把Cheat Engine附加进程到游戏的可执行程序当中，然后搜索随便一个枪械的子弹数量。子弹数量多数情况下会被存储为整数形式，有可能是2字节的也有可能是4字节的。要是没有搜到可以换扫描类型来搜索，一些游戏会对子弹数或者生命值之类的数据进行加密处理，这种情况后续会单独出一期教程来讲解。现在回到主题在4字节搜索的情况下进行多次搜索还是不能定位到子弹数量。切换2字节类型来进行搜索很快就能找到子弹数量，但是有三个搜索结果都是子弹数量。</p>
-<img src="\image\post_image\post3\S1.png" alt="S1" style="zoom:67%;" />
+<img src="/image/post_image/post3/S1.png" alt="S1" style="zoom:67%;" />
 
 <p>可以看到其中两个是静态地址，把这其中一个数据进行修改回到游戏查看实际子弹数量有没有发生改变。把三个数据都挨个进行测试之后发现两个静态地址修改后不会发生任何变化。所以可以确定这两个静态地址不是真正的子弹内存地址。</p>
 <h2 id="二，找出子弹相关的汇编代码"><a href="#二，找出子弹相关的汇编代码" class="headerlink" title="二，找出子弹相关的汇编代码"></a>二，找出子弹相关的汇编代码</h2><p>筛选来子弹地址之后进行 <strong>Find out what writes to this address</strong> 操作，然后在游戏中几枪就能看到修改子弹的汇编代码了。</p>
-<img src="\image\post_image\post3\S2.png" alt="S2" style="zoom:67%;" />
+<img src="/image/post_image/post3/S2.png" alt="S2" style="zoom:67%;" />
 
 <p>点击 <strong>Show disassembler</strong> 就能看到所有相关的代码了，此时打开IDA把这个段汇编代码的地址复制过去。</p>
 <h2 id="三，在IDA中分析此函数"><a href="#三，在IDA中分析此函数" class="headerlink" title="三，在IDA中分析此函数"></a>三，在IDA中分析此函数</h2><h3 id="1-UpdateAmmo函数"><a href="#1-UpdateAmmo函数" class="headerlink" title="1.UpdateAmmo函数"></a>1.UpdateAmmo函数</h3><p>可以看到这个函数的调用约定为 <strong>__thiscall</strong> 接受两个参数，其中一个是this指针另一个为当前子弹数。</p>
@@ -297,7 +297,7 @@
 
 <p>按照正常游戏的逻辑，推测后面调用的基本都是一些子弹射击之后的事件，比如播放射击音效，生成弹道，HUD更新之类的事情。我们需要找到的是真正的计算子弹的部分，所以需要研究调用 <strong>UpdateAmmo</strong> 函数的函数。</p>
 <h3 id="2-Shoot函数"><a href="#2-Shoot函数" class="headerlink" title="2.Shoot函数"></a>2.Shoot函数</h3><p>那么为了查看上一层的函数就要回到Cheat Engine，然后对修改内存值的那一行汇编代码加断点，选中代码后按快捷键 <strong>F5</strong> 就可以加断点操作了。有断点代码行会变成红色表示加断点成功。回到游戏中随便开一枪会发现游戏处于暂停状态了。此时在 <strong>Memory Viewer</strong> 窗口的右下角出现了一个小窗口记录了栈中的返回地址。</p>
-<img src="\image\post_image\post3\S3.png" alt="S3" style="zoom:67%;" />
+<img src="/image/post_image/post3/S3.png" alt="S3" style="zoom:67%;" />
 
 <p>双击第一行就能跳转到调用 <strong>UpdateAmmo</strong> 函数的调用处，也就是说当前断点出的每一层级的调用都可以在这里看到。调用 <strong>UpdateAmmo</strong> 是通过eax寄存器记录的值为调用处调用的并不是静态函数地址调用。</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs assembly">HMA.NMP::Matrix&lt;float&gt;::postMultiply+F72 - FF D0  - call eax<br></code></pre></td></tr></table></figure>
@@ -306,7 +306,7 @@
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-type">int</span> __usercall callUpdateAmmo@&lt;eax&gt;(DWORD <span class="hljs-keyword">this</span>@&lt;ecx&gt;, <span class="hljs-type">int</span> a2@&lt;ebp&gt;, <span class="hljs-type">int</span> a3@&lt;edi&gt;, <span class="hljs-type">int</span> a4@&lt;esi&gt;);<br></code></pre></td></tr></table></figure>
 
 <p>将IDA中把函数的第一行汇编代码的地址复制到 Cheat Engine 当中加入断点，游戏中进行射击击中断点后查看ecx寄存器的值。把这个地址粘贴到 ReClass.NET 当中可以发现是一个 ItemWeapon 类的实例。 ReClass.NET 会自动获取 <a target="_blank" rel="noopener" href="https://learn.microsoft.com/zh-cn/cpp/cpp/run-time-type-information?view=msvc-170">RTTI信息</a> 重建继承树在右侧用红字显示。</p>
-<img src="\image\post_image\post3\S4.png" alt="S4" style="zoom:67%;" />
+<img src="/image/post_image/post3/S4.png" alt="S4" style="zoom:67%;" />
 
 <p>在IDA Pro中通过安装 <strong>Class Informer</strong> 插件来解析RTTI记录，安装方法以及插件地址可以从此<a target="_blank" rel="noopener" href="https://github.com/herosi/classinformer">GitHub地址获取</a>。</p>
 <h4 id="（1）弹药量识别"><a href="#（1）弹药量识别" class="headerlink" title="（1）弹药量识别"></a>（1）弹药量识别</h4><p>在IDA中查看 <strong>call eax</strong> 的C++伪代码处，确实是一个接受两参数的函数调用。</p>
@@ -408,7 +408,7 @@
     </div>
     <div class="status-item">
       <i class="fas fa-clock"></i>
-      2025-08-22
+      2026-08-19
     </div>
     <div class="status-item">
       Designed By&nbsp; <a href="https://github.com/47bahadir" target="_blank"> bahadir</a>
@@ -473,6 +473,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <script src="//cdn.jsdelivr.net/npm/highlight.js@11.7.0/highlight.min.js"></script>
     <script>hljs.highlightAll();</script>
     <!-- 这里可以放置自定义脚本 -->
+<script src="/js/toc-highlight.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', (event) => {
   // Apply smooth scroll to non-TOC anchor links
@@ -513,7 +514,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
   });
 });
 </script>
-<script src="/js/toc.js"></script>
 
 <!-- Scripts -->
 <script>

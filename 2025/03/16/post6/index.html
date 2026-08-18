@@ -23,7 +23,7 @@
       }
     };
   </script>
-  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
   <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css">
@@ -272,7 +272,7 @@
 <h1 id="一，射线检测的介绍"><a href="#一，射线检测的介绍" class="headerlink" title="一，射线检测的介绍"></a>一，射线检测的介绍</h1><h2 id="基本原理"><a href="#基本原理" class="headerlink" title="基本原理"></a>基本原理</h2><p>首先射线就是一条从一个点出发一直延长的线，跟现实中的激光一样但是在游戏中是无终点并且一般是不可见的。这条从一个点射出来的线碰到障碍物（开发者定义的障碍物）就会停止。在FPS游戏从始至终一直会使用这个射线来检测与游戏场景当中一些特定物体的交互情况。</p>
 <p>在游戏中射线检测有很多的用途，比如玩家前面有一扇门，游戏开发者设定按下E键会开门。按照一般逻辑我们只有接近门然后视角对着门按E才能开门。那么怎么知道玩家是否在门的附近，而且是否面对着门呢？</p>
 <p>当然就是用射线检测来实现这一功能。这个功能跟蝙蝠的超声波一样，从玩家的准星当中发出一条直线类似于超声波，等遇到前方的门或者其他物品之后这条射线就停止运动并返回它碰到的物品信息。在每一帧一直检测玩家的准星发射的射线碰到的物品以及距离，再根据相应的物品做出相应的操作。</p>
-<img src="\image\post_image\post6\S1.png" alt="S1" style="zoom:67%;" />
+<img src="/image/post_image/post6/S1.png" alt="S1" style="zoom:67%;" />
 
 <p>在一部分游戏中摄像机发射的Line Trace（射线检测）和枪械的弹道是不一样的，尤其是在一些第三人称射击游戏当中。以下是具体步骤：</p>
 <ol>
@@ -335,7 +335,7 @@
 <p><code>(前缀：Multi) + 射线形状 + [后缀：ForObjects|ByChannel|ByProfile]</code></p>
 <p>加上前缀Multi代表射线可以穿透多个物体，没有这个前缀的话碰到第一个对象射线就失效了。后面的射线形状代表可以定义多种形状的射线，比如线形，球形，胶囊形等等。后缀就是按特定的方式来筛选分别是按类类型，通道类型和预设类型。</p>
 <p>UE5官方指南有详细的蓝图链接教程可以点击<a target="_blank" rel="noopener" href="https://dev.epicgames.com/documentation/zh-cn/unreal-engine/using-a-single-line-trace-raycast-by-channel-in-unreal-engine?application_version=5.5">此教程</a>来研究是如何实现的，以下是成品模板：</p>
-<img src="\image\post_image\post6\S2.png" alt="S2" style="zoom:67%;" />
+<img src="/image/post_image/post6/S2.png" alt="S2" style="zoom:67%;" />
 
 <p>这里演示的 API 是 **Single Line Trace By Channel ** 只是对首个碰撞物体的检测（不会检测叠加的物体），命中物体之后会把物体的名称显示到屏幕上。</p>
 <h2 id="2-通过C-方式实现"><a href="#2-通过C-方式实现" class="headerlink" title="2.通过C++方式实现"></a>2.通过C++方式实现</h2><p>以下是通过C++的方式来实现跟Unity相似的对于不同队伍的射线检测判断。</p>
@@ -397,7 +397,7 @@
     </div>
     <div class="status-item">
       <i class="fas fa-clock"></i>
-      2025-08-22
+      2026-08-19
     </div>
     <div class="status-item">
       Designed By&nbsp; <a href="https://github.com/47bahadir" target="_blank"> bahadir</a>
@@ -462,6 +462,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <script src="//cdn.jsdelivr.net/npm/highlight.js@11.7.0/highlight.min.js"></script>
     <script>hljs.highlightAll();</script>
     <!-- 这里可以放置自定义脚本 -->
+<script src="/js/toc-highlight.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', (event) => {
   // Apply smooth scroll to non-TOC anchor links
@@ -502,7 +503,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
   });
 });
 </script>
-<script src="/js/toc.js"></script>
 
 <!-- Scripts -->
 <script>
