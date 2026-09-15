@@ -1,0 +1,51 @@
+/* ============================================================
+   代码块移动端修复：
+   问题：移动端 .hljs 被强制 white-space: pre-wrap 自动换行，
+         长代码被外层 overflow:hidden 裁掉，且无法横向滚动。
+   修复：移动端改为不换行，整个代码容器横向可滚动。
+   ============================================================ */
+@media (max-width: 768px) {
+  /* 整个代码块容器作为横向滚动容器 */
+  .code-pre-wrapper {
+    overflow-x: auto !important;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  /* 行号列保持内容宽度，不参与缩放 */
+  .code-pre-wrapper .line-numbers-pre {
+    flex: 0 0 auto !important;
+    white-space: nowrap;
+  }
+
+  /* 代码内容：不换行、宽度跟随内容，让横向滚动真正生效 */
+  .code-pre-wrapper .code-content {
+    overflow: visible !important;
+    width: max-content !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    flex: 0 0 auto !important;
+    white-space: pre !important;
+    word-break: normal !important;
+    word-wrap: normal !important;
+  }
+  .code-pre-wrapper .code-content code,
+  .code-pre-wrapper .code-content .line {
+    white-space: pre !important;
+    word-break: normal !important;
+    word-wrap: normal !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  /* 细滚动条，减少对内容遮挡 */
+  .code-pre-wrapper::-webkit-scrollbar {
+    height: 4px;
+  }
+  .code-pre-wrapper::-webkit-scrollbar-thumb {
+    background: rgba(128, 128, 128, 0.5);
+    border-radius: 2px;
+  }
+}
