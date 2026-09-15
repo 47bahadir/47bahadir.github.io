@@ -72,3 +72,8 @@
   min-width: 0 !important;
   margin-inline: auto !important;
 }
+
+/* 统一 text 图代码区背景色，避免缩小居中后容器露出灰色形成两层颜色 */
+.code-pre-wrapper:has(> .code-content.text) {
+  background: #1e1e1e !important;
+}
