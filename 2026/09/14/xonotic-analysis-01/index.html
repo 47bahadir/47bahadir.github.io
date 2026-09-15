@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Xonotic 逆向分析（一）：生命值与移动系统的服务端权威架构 | BHD Tec</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="/image/logo/bit.ico">
+  <link rel="shortcut icon" type="image/x-icon" href="/image/logo/bit.ico">
+
+  <!-- MathJax Support -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true,
+        processEnvironments: true
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+      }
+    };
+  </script>
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+  <!-- 添加代码高亮样式 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
+  <!-- 添加highlight.js库 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+  <!-- 添加mermaid.js库 -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <link rel="stylesheet" href="/css/code.css">
+  <link rel="stylesheet" href="/css/code-custom.css">
+  <link rel="stylesheet" href="/css/code-languages.css">
+  <link rel="stylesheet" href="/css/mermaid.css">
+
+  <link rel="stylesheet" href="/css/vscode.css">
+  <link rel="stylesheet" href="/css/post.css">
+  <link rel="stylesheet" href="/css/tag.css">
+  <link rel="stylesheet" href="/css/categories.css">
+  <link rel="stylesheet" href="/css/archive.css">
+  <link rel="stylesheet" href="/css/search.css">
+  <link rel="stylesheet" href="/css/math.css">
+  <link rel="stylesheet" href="/css/mobile.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+  <link rel="stylesheet" href="/css/elements.css">
+  <link rel="stylesheet" href="/css/statistics.css">
+
+  <!-- 添加 JetBrains Mono 字体 -->  
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- Add any custom head content here -->
+
+  <script src="/js/explorer.js"></script>
+  <script src="/js/code-copy.js"></script>
+  <script src="/js/code-enhance.js"></script>
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div class="wrapper">
+      <div class="mobile-menu-toggle">
+        <i class="fas fa-bars"></i>
+      </div>
+      <header class="vs-header">
+  <nav class="vs-nav">
+    <div class="nav-left">
+      <a href="/" class="nav-brand">
+        <i class="fas fa-terminal"></i>
+        BHD Tec
+      </a>
+    </div>
+    
+    <div class="nav-right">
+      <a href="/" class="nav-item ">
+        <i class="fas fa-home"></i>
+        <span>首页</span>
+      </a>
+      <a href="/archives/" class="nav-item ">
+        <i class="fas fa-archive"></i>
+        <span>归档</span>
+      </a>
+      <a href="/categories/" class="nav-item ">
+        <i class="fas fa-folder"></i>
+        <span>分类</span>
+      </a>
+      <a href="/tags/" class="nav-item ">
+        <i class="fas fa-tags"></i>
+        <span>标签</span>
+      </a>
+      <a href="/search/" class="nav-item ">
+        <i class="fas fa-search"></i>
+        <span>搜索</span>
+      </a>
+      <a href="/about/" class="nav-item ">
+        <i class="fas fa-info-circle"></i>
+        <span>关于</span>
+      </a>
+    </div>
+  </nav>
+</header>
+
+<script>
+  function smoothScroll(event, target) {
+    event.preventDefault();
+    const targetId = target.substring(target.indexOf('#') + 1);
+    const targetElement = document.getElementById(targetId);
+
+    if (targetElement) {
+      window.scrollTo({
+        top: targetElement.offsetTop - 50, // 调整偏移量
+        behavior: 'smooth'
+      });
+    } else {
+      window.location.href = target;
+    }
+  }
+
+  window.addEventListener('scroll', function() {
+    const header = document.querySelector('.vs-header');
+    const nav = document.querySelector('.vs-nav');
+    const scrollPercent = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+    
+    nav.style.setProperty('--scroll-percent', `${scrollPercent}%`);
+    
+    if (window.scrollY > 0) {
+      header.classList.add('scrolled');
+    } else {
+      header.classList.remove('scrolled');
+    }
+  });
+
+  // 添加标签页切换动画
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', function(e) {
+      const ripple = document.createElement('span');
+      ripple.classList.add('nav-ripple');
+      this.appendChild(ripple);
+      
+      const rect = this.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      ripple.style.left = `${x}px`;
+      ripple.style.top = `${y}px`;
+      
+      setTimeout(() => ripple.remove(), 1000);
+    });
+  });
+</script>
+
+
+<div class="vscode-container">
+  <!-- 左侧资源管理器 -->
+  <div class="sidebar-explorer">
+    <!-- TOC导航 -->
+    <div class="explorer-section">
+      <div class="section-header">
+        <i class="fas fa-list"></i>
+        <span>TABLE OF CONTENTS</span>
+      </div>
+      <div class="section-content">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="toc-text">写在前面</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%94%9F%E5%91%BD%E5%80%BC%EF%BC%88Health%EF%BC%89"><span class="toc-text">生命值（Health）</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9B%AE%E6%A0%87"><span class="toc-text">目标</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%90%9C%E5%86%85%E5%AD%98"><span class="toc-text">搜内存</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%89%BE%E5%87%BA%E5%86%99%E8%A1%80%E9%87%8F%E7%9A%84%E4%BB%A3%E7%A0%81"><span class="toc-text">找出写血量的代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%88%91%E7%9A%84%E7%8C%9C%E6%83%B3%EF%BC%8C%E5%92%8C-AI-%E7%9A%84%E6%A0%B8%E5%AF%B9"><span class="toc-text">我的猜想，和 AI 的核对</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B3%E4%BA%8E%E2%80%9D%E6%9C%8D%E5%8A%A1%E7%AB%AF%E2%80%9D%E8%A6%81%E6%BE%84%E6%B8%85%E4%B8%80%E7%82%B9"><span class="toc-text">关于”服务端”要澄清一点</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%A7%BB%E5%8A%A8%EF%BC%88Movement%EF%BC%89"><span class="toc-text">移动（Movement）</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%89%BE%E9%AB%98%E5%BA%A6%E5%80%BC"><span class="toc-text">找高度值</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8E%E5%87%BD%E6%95%B0%E9%87%8C%E6%8C%96%E5%87%BA%E7%9A%84%E4%BA%BA%E7%89%A9%E6%9C%BA%E5%88%B6"><span class="toc-text">从函数里挖出的人物机制</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%A4%E7%B1%BB%E6%95%B0%E6%8D%AE%E7%9A%84%E7%BB%93%E8%AE%BA"><span class="toc-text">两类数据的结论</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E7%AB%AF%E6%9D%83%E5%A8%81%E9%93%BE%E8%B7%AF"><span class="toc-text">服务端权威链路</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%BB%93%E8%AF%AD"><span class="toc-text">结语</span></a></li></ol>
+      </div>
+    </div>
+    
+    <!-- 同分类文章 -->
+    
+    <div class="explorer-section">
+      <div class="section-header">
+        <i class="fas fa-folder"></i>
+        <span>CATEGORY POSTS</span>
+      </div>
+      <div class="section-content">
+        
+          <div class="file">
+            <i class="fas fa-file-code"></i>
+            <a href="/2025/04/01/post7/">游戏函数调用技术</a>
+          </div>
+        
+          <div class="file">
+            <i class="fas fa-file-code"></i>
+            <a href="/2025/03/16/post6/">射线检测函数的分析</a>
+          </div>
+        
+          <div class="file">
+            <i class="fas fa-file-code"></i>
+            <a href="/2025/03/08/post5/">杀手5逆向分析（四）</a>
+          </div>
+        
+          <div class="file">
+            <i class="fas fa-file-code"></i>
+            <a href="/2025/03/04/post4/">杀手5逆向分析（三）</a>
+          </div>
+        
+          <div class="file">
+            <i class="fas fa-file-code"></i>
+            <a href="/2025/02/26/post3/">杀手5逆向分析（二）</a>
+          </div>
+        
+          <div class="file">
+            <i class="fas fa-file-code"></i>
+            <a href="/2025/02/23/post2/">杀手5逆向分析（一）</a>
+          </div>
+        
+      </div>
+    </div>
+    
+    
+    <!-- 标签列表 -->
+    
+    <div class="explorer-section">
+      <div class="section-header">
+        <i class="fas fa-tags"></i>
+        <span>ARTICLE TAGS</span>
+      </div>
+      <div class="section-content">
+        
+          <div class="tag-item">
+            <i class="fas fa-tag"></i>
+            <a href="/tags/Xonotic/">Xonotic</a>
+            <span class="count">(1)</span>
+          </div>
+        
+          <div class="tag-item">
+            <i class="fas fa-tag"></i>
+            <a href="/tags/QuakeC/">QuakeC</a>
+            <span class="count">(1)</span>
+          </div>
+        
+          <div class="tag-item">
+            <i class="fas fa-tag"></i>
+            <a href="/tags/%E8%99%9A%E6%8B%9F%E6%9C%BA/">虚拟机</a>
+            <span class="count">(1)</span>
+          </div>
+        
+          <div class="tag-item">
+            <i class="fas fa-tag"></i>
+            <a href="/tags/%E6%9C%8D%E5%8A%A1%E7%AB%AF%E6%9D%83%E5%A8%81/">服务端权威</a>
+            <span class="count">(1)</span>
+          </div>
+        
+      </div>
+    </div>
+    
+  </div>
+
+  <!-- 主要内容区域 -->
+  <div class="editor-content">
+    <div class="tab-bar">
+      <div class="tab active">
+        <i class="fas fa-file-alt"></i>
+        <span>Xonotic 逆向分析（一）：生命值与移动系统的服务端权威架构.md</span>
+      </div>
+    </div>
+    
+    <div class="content-area">
+      <article class="post-content">
+        <div class="post-header">
+          <h1>Xonotic 逆向分析（一）：生命值与移动系统的服务端权威架构</h1>
+          <div class="post-meta">
+            <span class="date">
+              <i class="fas fa-calendar-alt"></i>
+              2026-09-14
+            </span>            
+              <span class="categories">
+                <i class="fas fa-folder"></i>
+                <div class="categories-list">
+                  <ul class="category-item-post-list"><li class="category-item-post-list-item"><a class="category-item-post-list-link" href="/categories/%E6%B8%B8%E6%88%8F%E9%80%86%E5%90%91/">游戏逆向</a></li></ul>
+                </div>
+              </span>
+            
+            
+              <span class="tags">
+                <i class="fas fa-tags"></i>
+                <div class="tags-list">
+                  <ul class="tag-item-post-list" itemprop="keywords"><li class="tag-item-post-list-item"><a class="tag-item-post-list-link" href="/tags/QuakeC/" rel="tag">QuakeC</a></li><li class="tag-item-post-list-item"><a class="tag-item-post-list-link" href="/tags/Xonotic/" rel="tag">Xonotic</a></li><li class="tag-item-post-list-item"><a class="tag-item-post-list-link" href="/tags/%E6%9C%8D%E5%8A%A1%E7%AB%AF%E6%9D%83%E5%A8%81/" rel="tag">服务端权威</a></li><li class="tag-item-post-list-item"><a class="tag-item-post-list-link" href="/tags/%E8%99%9A%E6%8B%9F%E6%9C%BA/" rel="tag">虚拟机</a></li></ul>
+                </div>
+              </span>
+            
+          </div>
+        </div>
+        
+        <div class="post-body vscode-markdown">
+          <h1 id="写在前面"><a href="#写在前面" class="headerlink" title="写在前面"></a>写在前面</h1><p>这个系列是 Xonotic 的逆向分析合集。Xonotic 是一个开源的竞技 FPS，我选它的原因很简单：给自己定了个小目标，想在游戏里实现锁血、无限子弹、无敌、传送、飞跃、透视这一堆功能，然后结合 AI 来快速实现。</p>
+<p>游戏虽然开源，但我刻意不读源码，全部从二进制出发做黑盒逆向。这样练出来的是”程序理解 + 验证”的能力，而不是背源码。等分析完想核对，直接对照开源代码就行，算是给自己留了一份标准答案。</p>
+<p>这一篇是合集的第一篇，内容是 2026-09-14 一整天的研究：先是生命值，再是移动，最后顺藤摸瓜把整个游戏的服务端架构摸了个大概。</p>
+<h1 id="生命值（Health）"><a href="#生命值（Health）" class="headerlink" title="生命值（Health）"></a>生命值（Health）</h1><h2 id="目标"><a href="#目标" class="headerlink" title="目标"></a>目标</h2><p>想实现锁血，第一步得搞清楚：血量到底存在哪，谁在算，怎么变化。</p>
+<h2 id="搜内存"><a href="#搜内存" class="headerlink" title="搜内存"></a>搜内存</h2><p>先在内存里搜 int 型的血量，搜出来一大堆，改哪个游戏里的血量都不动——这些都是显示用的假值。改成 float 搜之后，找到一个带小数的值，整数部分和游戏里显示的生命值完全一致。直接改它，血量真的变了。这才是真值。</p>
+<img src="/image/post_image/xonotic01/health-float-search.png" alt="通过 float 搜索定位到真实生命值" style="zoom:80%;" />
+
+<p>观察了一下这个地址，是 0x7 开头的堆地址；之前那堆显示值是 0x5 开头。两类值根本不在同一块区域。</p>
+<h2 id="找出写血量的代码"><a href="#找出写血量的代码" class="headerlink" title="找出写血量的代码"></a>找出写血量的代码</h2><p>对这个地址下写入断点，让游戏里扣血或加血，断下来之后找到了修改这个地址的汇编代码：</p>
+<img src="/image/post_image/xonotic01/health-write-access.png" alt="修改生命值内存的汇编代码" style="zoom:67%;" />
+
+<p>用 RFA 换算出文件内偏移 0x22E982，到 IDA 里打开看：</p>
+<img src="/image/post_image/xonotic01/health-ida-22E982.png" alt="IDA 中 0x22E982 处的代码" style="zoom:67%;" />
+
+<p>这一段在一个超大函数里（sub_22A680），函数内部全是”取指令 &#x2F; 跳表分发”的结构，字符串里还有 SVVM_ExecuteProgram、Entityfield watchpoint 这些关键字。我意识到这不对劲——这不是普通游戏逻辑，而是一个虚拟机解释器。</p>
+<h2 id="我的猜想，和-AI-的核对"><a href="#我的猜想，和-AI-的核对" class="headerlink" title="我的猜想，和 AI 的核对"></a>我的猜想，和 AI 的核对</h2><p>按我以前搞游戏逆向的经验，我的第一反应是：<code>[rsi + rax * 4]</code> 指向的就是角色生命值，rsi 应该是角色基址加上后续的偏移之类的东西。</p>
+<p>我把已知的信息和我的猜想一起交给 AI 做交叉分析，用它来核对我的猜想到底对不对。AI 给出来的结论把我的猜测基本全盘否定了：</p>
+<ul>
+<li><strong>0x22E982 不是 Health 专属的代码</strong>，而是 QuakeC 服务端虚拟机（SVVM）里一条通用的 32 位 Store 指令。它自己根本不知道写的是不是血量，写谁、写什么值，全是指令的操作数说了算。</li>
+<li>游戏里存在三套几乎一模一样的虚拟机：<strong>SVVM</strong>（服务端，游戏判定都在这）、<strong>CLVM</strong>（客户端，画面&#x2F;HUD）、<strong>MVM</strong>（菜单）。</li>
+<li>真正影响游戏判定的血量在服务端 SVVM 的权威状态里，客户端那份主要用于 HUD 显示，属于副本。</li>
+<li>这条指令里 <strong>rsi 是 VM 写侧数据区的基址</strong>（从程序结构偏移 +0x5C368 取出，整个函数调用期间不变），不是角色基址；<strong>rax 是目标槽位下标</strong>，血量存在第几个槽由它决定；<strong>edx 是要写入的值</strong>。</li>
+<li>因为这是一条通用 Store，游戏里几乎所有变量的写入都会从这条指令经过，所以不能全局 Hook &#x2F; 禁用，必须先识别出血量对应的 index（槽位下标），再针对它做条件过滤。</li>
+</ul>
+<p>结论是：这个游戏的生命值不是在本地算的，是在服务端算的。我最初那套”角色基址加偏移”的思路，在这个游戏里不成立。</p>
+<h2 id="关于”服务端”要澄清一点"><a href="#关于”服务端”要澄清一点" class="headerlink" title="关于”服务端”要澄清一点"></a>关于”服务端”要澄清一点</h2><p>我当时还下过一个结论：既然是服务端计算的，那本地改就没意义了，数据都在云端，往后就没必要研究。这个结论后来被我推翻——<strong>单机 &#x2F; 本地服务器模式下，你跑的”服务端”就是本机自己这个进程，改它完全有效</strong>。只有联机打别人的服务器时，权威值才在云端，本地才真的改不动。所以单机环境下，这条路依然值得继续走。</p>
+<h1 id="移动（Movement）"><a href="#移动（Movement）" class="headerlink" title="移动（Movement）"></a>移动（Movement）</h1><p>血量那边碰了一鼻子灰，那就换个目标：搞清楚移动到底是在服务端算，还是在客户端算。</p>
+<h2 id="找高度值"><a href="#找高度值" class="headerlink" title="找高度值"></a>找高度值</h2><p>用未知初始值的方式，反复改变游戏里角色的高度，从内存筛出了一堆相关数值，有 0x7 开头的，也有 0x5 开头的。0x7 开头的应该是服务端模块区域，所以我重点观察 0x5 开头那些值是被什么代码改的。下面是找到的人物高度坐标数据：</p>
+<img src="/image/post_image/xonotic01/movement-height-values.png" alt="人物高度坐标数据" style="zoom:80%;" />
+
+<p>顺着这些值找到修改它们的代码：</p>
+<img src="/image/post_image/xonotic01/movement-write-access.png" alt="修改人物高度的汇编代码" style="zoom:67%;" />
+
+<p>同样的办法算出偏移，到 IDA 里打开：</p>
+<img src="/image/post_image/xonotic01/movement-ida-code.png" alt="IDA 中移动相关代码" style="zoom:67%;" />
+
+<h2 id="从函数里挖出的人物机制"><a href="#从函数里挖出的人物机制" class="headerlink" title="从函数里挖出的人物机制"></a>从函数里挖出的人物机制</h2><p>把整个函数交给 AI 分析，整理出来的结果相当有信息量，我用人话复述一遍：</p>
+<p><strong>（1）输入轴。</strong> 0x3CAB40、0x3CAB44 是两个被钳到 [-1,1] 的输入轴（前进 &#x2F; 侧移），越界还会映射成报文里的按键位（0x8 &#x2F; 0x10 &#x2F; 0x20 &#x2F; 0x40）。0x3CABA4 是一张 64 位的按键位图，每一位对应一个按键状态全局（0x12683A0~0x1268490 那一排就是各按键输入），最高能到 0x40000 位。</p>
+<p><strong>（2）发给服务端的 usercmd。</strong> 在打包循环里字段顺序一目了然：角度（3×float）、前进 &#x2F; 侧移 &#x2F; 上移、压缩角度（2×short，×32767 后写入）、按键、冲动值等。0x3CAB20 区的 usercmd 条目是 160 字节一条，存了多条历史。</p>
+<p><strong>（3）客户端本地预测。</strong> 0x10CED88 起是一个 3×4 变换矩阵（12 个 float），被全程序 50 处引用，属于客户端大状态结构，矩阵第 3 列就是平移向量。我改的”人物高度”其实是客户端预测位置 &#x2F; 眼睛高度的 Z 分量。程序还会对两个 3D 点逐轴取 min&#x2F;max 拼成包围盒，然后遍历所有实体（1464 字节 &#x2F; 个）做扫掠盒相交测试，命中者记录下标，最后做位置平滑插值。</p>
+<p>用大白话把整体流程讲清楚就是这样：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs text">玩家输入<br>  -&gt; 客户端：立即预测并计算 XYZ，画面马上动<br>  -&gt; 客户端：同时把 usercmd 打包发给服务器<br>  -&gt; 服务器：收到后重新模拟运动，算出权威 XYZ<br>  -&gt; 服务器：把权威坐标发回客户端<br>  -&gt; 客户端：拿服务端结果做纠偏 / 平滑<br></code></pre></td></tr></table></figure>
+
+<p>说白了，为了体验，客户端先把位置算出来让画面立刻动，服务端再真实地重新模拟一遍，把结果发回来给客户端校正。所以你把客户端高度直接改成一万，画面可能会瞬间飞上天，但服务器收到的是你的输入动作、不是那一万，它自己算出来的位置还是在地面附近。</p>
+<h2 id="两类数据的结论"><a href="#两类数据的结论" class="headerlink" title="两类数据的结论"></a>两类数据的结论</h2><ul>
+<li>生命值：客户端可能有显示副本，服务端计算权威值。</li>
+<li>位置：客户端自己做预测，服务端计算权威值。</li>
+</ul>
+<p>两边都是<strong>服务端权威（Server Authority）</strong>，只是移动对延迟敏感，多了一层客户端预测而已。</p>
+<h1 id="服务端权威链路"><a href="#服务端权威链路" class="headerlink" title="服务端权威链路"></a>服务端权威链路</h1><p>到这里问题就变成了：用户的指令到服务端之后，是靠什么函数算出坐标和速度的。继续沿着这条线索往下挖，得到了一条完整的服务端链条：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs text">sub_1D98B0  服务端收包 / 解析客户端消息（recv clc_ackframe %i，opcode 50）<br>   |  usercmd 存入服务端客户端槽<br>sub_281280  每帧物理驱动器（调 SV_Physics 组）<br>   |<br>sub_280690  SV_Physics 总调度：按 movetype 字段分发<br>   |<br>sub_278E80 / sub_28AB20  SV_Physics_ClientEntity<br>   |   1) 写 time 字段<br>   |   2) 调 sub_28B720（引擎壳：跑 QC SV_PlayerPhysics）<br>   |   3) 调 sub_22A680（PlayerPreThink）<br>   |   4) 按 movetype 分发引擎物理<br>   |   5) 调 sub_22A680（PlayerPostThink）<br>   |<br>sub_286930  VM_SV_walkmove（walkmove 内置）<br>   |<br>sub_26A800  真正的&quot;带碰撞改位置&quot;底层原语<br></code></pre></td></tr></table></figure>
+
+<p>这里有几个最硬的证据，全部来自二进制本身：</p>
+<ol>
+<li><p>二进制里直接内嵌了 QC 函数名和缺失报错：<code>QC function PlayerPreThink is missing</code>（0x3045A0）、<code>QC function PlayerPostThink is missing</code>（0x304600）、<code>QC function SV_PlayerPhysics is missing</code>（0x304DC8），以及名字字符串 <code>&quot;PlayerPreThink&quot;</code>&#x2F;<code>&quot;PlayerPostThink&quot;</code>&#x2F;<code>&quot;SV_PlayerPhysics&quot;</code>&#x2F;<code>&quot;StartFrame&quot;</code>（0x31E581 &#x2F; 0x31E571 &#x2F; 0x31E633），被 sub_205080（启动时解析 QC 函数的初始化代码，31KB）引用。</p>
+</li>
+<li><p>SV_Physics_ClientEntity 里跑 QC 的两个调用点被我坐实了：</p>
+</li>
+</ol>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs text">0x278F4E  (*(&amp;xmmword_115BCE0 + 1))(byte_10FF300, dword_115BBF8,<br>                                     &quot;QC function PlayerPreThink is missing&quot;)<br>0x27904D  (*(&amp;xmmword_115BCE0 + 1))(byte_10FF300, dword_115BBF4,<br>                                     &quot;QC function PlayerPostThink is missing&quot;)<br></code></pre></td></tr></table></figure>
+
+<p>而 <code>xmmword_115BCE0</code> 的第二项，正是第一轮追踪时 SpawnServer 注册进全局表的那个函数指针 —— <strong>sub_22A680（SVVM 执行器）</strong>。也就是说：服务端每帧就是用我最初发现的这个解释器，去跑玩家移动的 PlayerPreThink &#x2F; PlayerPostThink。</p>
+<ol start="3">
+<li><p>sub_28B720（16KB 大函数）里有字符串 <code>../../../sv_user.c</code> 和 <code>QC function SV_PlayerPhysics is missing</code>，被 sub_278E80 和 sub_28F5F0 调用，也通过同一个执行器槽（0x115BCE8）去跑 QC 的 SV_PlayerPhysics，还有 cvar <code>sv_playerphysicsqc</code> 可以开关这条 QC 物理。</p>
+</li>
+<li><p>VM_SV_walkmove：读 VM 栈参数 → 校验实体 → 用偏航角算 sin&#x2F;cos → 调 sub_26A800 真正移动实体（带碰撞），把结果 1&#x2F;0 写回 VM 返回槽。movetogoal（SV_MoveToGoal）等其它原语同理。</p>
+</li>
+</ol>
+<p>所以最核心的问题到此已经有了答案：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs text">玩家输入<br>   |<br>客户端 usercmd<br>   |<br>CL_SendMove<br>   |<br>服务端接收<br>   |<br>SV_PlayerPhysics / PlayerPreThink<br>   |<br>QuakeC VM<br>   |<br>walkmove<br>   |<br>碰撞 / 位移原语<br>   |<br>权威 Position<br></code></pre></td></tr></table></figure>
+
+<h1 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h1><p>这一天把生命值和移动相关的内容基本摸完了。收获不在于”找到了哪个地址”，而在于彻底看清了这个游戏的架构本质：<strong>玩法逻辑是用 QuakeC 脚本字节码跑在虚拟机里的，服务端才是权威，客户端只有预测和显示。</strong></p>
+<p>这也意味着后面做”锁血”这类功能，<strong>只能在服务端动手</strong>，客户端是实现不了的——客户端拿到的只是显示副本，本地改了也会被服务端算出来的权威值覆盖回去。要做锁血，要么找到服务端 VM 里血量对应的那个 index，在它写入时做条件处理；要么在服务端那一层物理&#x2F;逻辑链路里做手脚。相比之下移动类功能（传送、飞跃）因为有客户端预测这一层，本地改会”看起来生效”，但最终权威照样在服务端。具体的，下一篇继续。</p>
+
+        </div>
+        
+        <!-- 文章导航 -->
+        <nav class="post-nav">
+          
+          
+            <a class="next" href="/2025/08/21/post10/">
+              AI工作原理详解
+              <i class="fas fa-chevron-right"></i>
+            </a>
+          
+        </nav>
+      </article>
+    </div>
+  </div>
+</div>
+
+    </div>
+    <footer class="footer">
+  <div class="status-bar">
+    <div class="status-item">
+      <i class="fas fa-code-branch"></i>
+      master
+    </div>
+    <div class="status-item">
+      <i class="fas fa-sync"></i>
+      bahadir
+    </div>
+    <div class="status-item">
+      <i class="fas fa-clock"></i>
+      2026-09-15
+    </div>
+    <div class="status-item">
+      Designed By&nbsp; <a href="https://github.com/47bahadir" target="_blank"> bahadir</a>
+    </div>
+    <div class="status-item github">
+      <a href="https://github.com/47bahadir" target="_blank">
+        <i class="fab fa-github"></i>
+      </a>
+    </div>
+    <div class="status-item" id="site-runtime" style="margin-left: auto;">
+      <i class="fas fa-heartbeat"></i>
+      <span id="runtime-text">Site running for...</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+// 网站运行时间计算器
+function updateSiteRuntime() {
+  // 设置网站启动时间 (请根据实际情况修改这个日期)
+  const startDate = new Date('2025-02-22 00:00:00'); // 修改为你的网站启动日期
+  const now = new Date();
+  const timeDiff = now - startDate;
+
+  // 计算天数、小时、分钟、秒数
+  const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+
+  // 更新显示文本
+  const runtimeText = `Site running for ${days} days ${hours} hours ${minutes} minutes ${seconds} seconds`;
+  const runtimeElement = document.getElementById('runtime-text');
+  if (runtimeElement) {
+    runtimeElement.textContent = runtimeText;
+  }
+}
+
+// 页面加载完成后开始计时
+document.addEventListener('DOMContentLoaded', function() {
+  updateSiteRuntime(); // 立即更新一次
+  setInterval(updateSiteRuntime, 1000); // 每秒更新一次
+});
+</script>
+
+    
+    <!-- 全局配置 -->
+    <script>
+      window.HEXO_CONFIG = {
+        language: "zh-CN",
+        root: "/"
+      };
+      
+      // 特定于搜索的配置
+      window.VSC4T_SEARCH = {
+        root: "/"
+      };
+    </script>
+    
+    <script src="//cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/highlight.js@11.7.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+    <!-- 这里可以放置自定义脚本 -->
+<script src="/js/toc-highlight.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', (event) => {
+  // Apply smooth scroll to non-TOC anchor links
+  document.querySelectorAll('a[href^="#"]:not(.toc-link)').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+      e.preventDefault();
+      // Check if querySelector is valid before using it
+      try {
+        const targetSelector = this.getAttribute('href');
+        // Basic check for potentially invalid selectors (though not exhaustive)
+        if (targetSelector && targetSelector.length > 1) { 
+          const targetElement = document.querySelector(targetSelector);
+          if (targetElement) {
+            targetElement.scrollIntoView({
+              behavior: 'smooth'
+            });
+          } else {
+            console.warn('Smooth scroll target not found:', targetSelector);
+          }
+        } else {
+           console.warn('Invalid href for smooth scroll:', targetSelector);
+        }
+      } catch (error) {
+        console.error('Error during smooth scroll:', error, 'Selector:', this.getAttribute('href'));
+        // Fallback or alternative behavior if needed
+        // For example, try getElementById if it's just an ID
+        const targetId = this.getAttribute('href').slice(1);
+        try {
+            const targetElementById = document.getElementById(decodeURIComponent(targetId));
+            if (targetElementById) {
+                targetElementById.scrollIntoView({ behavior: 'smooth' });
+            }
+        } catch (idError) {
+             console.error('Fallback getElementById also failed:', idError);
+        }
+      }
+    });
+  });
+});
+</script>
+
+<!-- Scripts -->
+<script>
+  // 将语言文件中的翻译传递给前端
+  window.HEXO_CONFIG = {
+    language: "zh-CN",
+    search_placeholder: "输入关键词搜索...",
+    search_no_results: "未找到相关结果",
+    search_result: "نتيجة",
+    search_results: "搜索结果",
+    search_results_found: "找到 undefined 个结果",
+    search_in: "搜索范围",
+    search_in_title: "标题",
+    search_in_content: "内容",
+    search_in_tags: "标签",
+    search_in_categories: "分类",
+    search_filters: "搜索过滤器",
+    search_recent: "最近搜索",
+    search_clear: "清除",
+    search_loading: "加载中...",
+    search_error: "加载搜索数据时出错"
+  };
+</script>
+
+
+
+<!-- 添加所有需要的脚本 -->
+<script src="/js/main.js"></script>
+<script src="/js/search.js"></script>
+
+
+    <script>
+      // 移动端菜单切换
+      $(document).ready(function() {
+        $('.mobile-menu-toggle').click(function() {
+          $('.sidebar-explorer').toggleClass('show');
+        });
+      });
+    </script>
+  </body>
+</html>
