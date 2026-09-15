@@ -49,3 +49,26 @@
     border-radius: 2px;
   }
 }
+
+/* ============================================================
+   流程图 / 结构图（```text 语言）水平居中：
+   - 内容宽度 < 可用宽度：整体居中，隐藏行号，作为"图"展示
+   - 内容宽度 > 可用宽度：自动回到左对齐 + 横向滚动，
+     避免 flex 居中时左侧内容被裁掉
+   普通代码块（c/cpp 等）不受影响。
+   ============================================================ */
+.code-pre-wrapper:has(> .code-content.text) {
+  overflow-x: auto;
+}
+
+.code-pre-wrapper:has(> .code-content.text) > .line-numbers-pre {
+  display: none;
+}
+
+.code-pre-wrapper:has(> .code-content.text) > .code-content {
+  flex: 0 0 auto !important;
+  width: fit-content !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin-inline: auto !important;
+}
